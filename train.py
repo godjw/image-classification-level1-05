@@ -2,59 +2,70 @@ import os
 
 import torch
 from torch import nn, optim
+from torch.utils.data import DataLoader
 
 import torchvision
 import torchvision.transforms as T
 
-from sklearn import model_selection
+from torchsummary import summary
+from sklearn import model_selection, metrics
 import pandas as pd
 from tqdm import tqdm
 
-import config_parser
-import data_utils
+from config_parser import ConfigParser
+from data_utils import *
 import models
-import logger
+from logger import Logger
 
-config = config_parser.ConfigParser(description='mask classification learner')
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
 
-train_root_dir = os.path.join(config.data_dir, config.train_dir_name)
-train_meta_data = pd.read_csv(os.path.join(train_root_dir, 'train.csv')).drop(columns=['id', 'race']).to_numpy()
+config = ConfigParser(description='mask classification learner')
+helper = MetadataHelper(config=config)
+logger = Logger(helper=helper)
 
-img_paths, labels = data_utils.get_paths_and_labels(
-    root_dir=train_root_dir,
-    meta_data=train_meta_data
-)
+paths_and_labels = helper.get_paths_and_labels()
+
 train_img_paths, val_img_paths, train_labels, val_labels = model_selection.train_test_split(
-    img_paths, labels, 
+    paths_and_labels['train_img_paths'],
+    paths_and_labels['train_labels'],
     test_size=0.2,
-    shuffle=True, 
-    stratify=labels
+    shuffle=True,
+    stratify=paths_and_labels['train_labels']
 )
 
-transform = T.Compose([
+base_transforms = [
     T.Resize((512, 384), T.InterpolationMode.BICUBIC),
     T.ToTensor(),
-])
-train_dataset = data_utils.MaskClassifierDataset(
+    T.Normalize(mean=(0.5, 0.5, 0.5), std=(0.2, 0.2, 0.2))
+]
+train_dataset = MaskClassifierDataset(
     img_paths=train_img_paths,
     labels=train_labels,
-    transform=transform
+    transform=T.Compose([
+        *base_transforms,
+        T.RandomHorizontalFlip(p=0.5)
+    ])
 )
-val_dataset = data_utils.MaskClassifierDataset(
+val_dataset = MaskClassifierDataset(
     img_paths=val_img_paths,
-    labels=val_labels
+    labels=val_labels,
+    transform=T.Compose(base_transforms)
 )
-train_loader = torch.utils.data.DataLoader(dataset=train_dataset, batch_size=config.batch_size, shuffle=True, num_workers=2, drop_last=True)
-val_loader = torch.utils.data.DataLoader(dataset=val_dataset, batch_size=config.batch_size, shuffle=False, num_workers=2, drop_last=False)
+logger.summarize_transform(transform=train_dataset.transform)
+
+train_loader = DataLoader(dataset=train_dataset, batch_size=config.batch_size, shuffle=True, num_workers=2, drop_last=True)
+val_loader = DataLoader(dataset=val_dataset, num_workers=2)
 
 model = models.MaskClassifierModel(num_classes=18).to(device)
+logger.summarize_model(model=model, input_size=(3, 512, 384))
+
 criterion = nn.MultiLabelSoftMarginLoss().to(device)
 optimizer = optim.Adam(params=model.parameters(), lr=config.learning_rate)
 
 for epoch in range(1, config.n_epochs + 1):
     running_loss = 0
-    n_corrects = 0
+    accumulated_accuracy = 0
+    accumulated_f1 = 0
     for imgs, labels in tqdm(train_loader):
         imgs = imgs.to(device)
         labels = labels.to(device)
@@ -64,10 +75,13 @@ for epoch in range(1, config.n_epochs + 1):
         loss = criterion(predictions, labels_one_hot)
 
         running_loss += loss.item()
-        n_correct = (predictions.argmax(dim=1).unsqueeze(dim=1) == labels).float().sum(dim=0).item()
-        
+        accumulated_accuracy += (predictions.argmax(dim=1).unsqueeze(dim=1) == labels).float().mean(dim=0).item()
+        accumulated_f1 += metrics.f1_score(predictions.argmax(dim=1).unsqueeze(dim=1).cpu(), labels.cpu(), average='macro')
+
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+    
+    print(f'epoch: {epoch:02d}/{config.n_epochs}\tacc: {(accumulated_accuracy / len(train_loader)) * 100:0.2f}%\tf1: {accumulated_f1 / len(train_loader):.3f}\tloss: {running_loss / len(train_loader):0.3f}')
 
-    print(f'epoch: {epoch:02d}/{config.n_epochs}\tcorrect: {(n_correct / config.batch_size) * 100:0.2f}%\tloss: {running_loss / config.batch_size:0.3f}')
+logger.export(output_dir=config.trial_name)
