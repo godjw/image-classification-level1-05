@@ -14,6 +14,8 @@ class ConfigParser(ArgumentParser):
     n_epochs: int = 10
     batch_size: int = 64
     learning_rate: float = 1e-3
+    num_workers: int = 3
+    stratified_k_fold: int = 2
 
     def __init__(self, description):
         super().__init__(description=description)
