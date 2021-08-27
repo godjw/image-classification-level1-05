@@ -33,13 +33,8 @@ train_img_paths, val_img_paths, train_labels, val_labels = model_selection.train
     stratify=paths_and_labels['train_labels']
 )
 
-<<<<<<< HEAD
-transform = T.Compose([
-    T.Resize((512, 384)),
-=======
 base_transforms = [
     T.Resize((512, 384), T.InterpolationMode.BICUBIC),
->>>>>>> 60015543fd939082f35da23bd64662e65f04be7a
     T.ToTensor(),
     T.Normalize(mean=(0.5, 0.5, 0.5), std=(0.2, 0.2, 0.2))
 ]
