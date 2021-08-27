@@ -33,7 +33,7 @@ train_img_paths, val_img_paths, train_labels, val_labels = model_selection.train
 )
 
 transform = T.Compose([
-    T.Resize((512, 384), T.InterpolationMode.BICUBIC),
+    T.Resize((512, 384)),
     T.ToTensor(),
 ])
 train_dataset = data_utils.MaskClassifierDataset(
