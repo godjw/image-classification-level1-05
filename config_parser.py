@@ -1,13 +1,14 @@
-import argparse
+from argparse import ArgumentParser
 import json
 from dataclasses import dataclass
 
 @dataclass
-class ConfigParser(argparse.ArgumentParser):
+class ConfigParser(ArgumentParser):
     # basic settings
-    data_dir: str = ''
-    eval_dir_name: str = ''
-    train_dir_name: str = ''
+    data_dir: str = None
+    eval_dir_name: str = None
+    train_dir_name: str = None
+    trial_name: str = None
 
     # hyperparameters
     n_epochs: int = 10
@@ -16,7 +17,8 @@ class ConfigParser(argparse.ArgumentParser):
 
     def __init__(self, description):
         super().__init__(description=description)
-        self.add_argument('--config', metavar='-C', help='a')
+        self.add_argument('--config', metavar='-C', help='parse configuration written in .json')
+        self.add_argument('--name', metavar='-N', help='set the name of current trial')
         self._set_config()
     
     def _set_config(self):
@@ -26,4 +28,6 @@ class ConfigParser(argparse.ArgumentParser):
             configs = json.loads(contents)
 
             for arg in self.__annotations__.keys():
-                exec(f'self.{arg} = configs["config"][arg]')
+                if arg in configs['config']:
+                    exec(f'self.{arg} = configs["config"][arg]')
+        self.trial_name = _args_dict['name']
