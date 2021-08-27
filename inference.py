@@ -5,7 +5,7 @@ import torchvision.transforms as T
 from tqdm import tqdm
 
 from data_utils import *
-#forbranch
+
 def save_submission(model, transforms, helper, device):
     eval_metadata = helper.get_metadata()['eval_metadata']
     image_paths = helper.get_paths_and_labels()['eval_img_paths']
