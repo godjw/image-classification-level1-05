@@ -1,5 +1,6 @@
 import configparser
 import os
+from collections import Counter
 
 import torch
 from torch.utils.data import Dataset
@@ -47,6 +48,7 @@ class MetadataHelper:
         self.config = config
         self._set_paths()
         self._set_metadata()
+        self._set_paths_and_labels()
     
     def _set_paths(self):
         self.dirs = {
@@ -66,8 +68,8 @@ class MetadataHelper:
     def get_metadata(self):
         return self.metadata
 
-    def get_paths_and_labels(self):
-        paths_and_labels = {
+    def _set_paths_and_labels(self):
+        self.paths_and_labels = {
             'train_img_paths': [],
             'train_labels': []
         }
@@ -82,9 +84,18 @@ class MetadataHelper:
                     label += 6
                 elif file_name.startswith('normal'):
                     label += 12
-                paths_and_labels['train_img_paths'].append(os.path.join(img_dir, file_name))
-                paths_and_labels['train_labels'].append(label)
-
+                self.paths_and_labels['train_img_paths'].append(os.path.join(img_dir, file_name))
+                self.paths_and_labels['train_labels'].append(label)
+        
         img_dir = os.path.join(self.dirs['eval_root_dir'], 'images')
-        paths_and_labels['eval_img_paths'] = [os.path.join(img_dir, img_id) for img_id in self.metadata['eval_metadata'].ImageID]
-        return paths_and_labels
+        self.paths_and_labels['eval_img_paths'] = [os.path.join(img_dir, img_id) for img_id in self.metadata['eval_metadata'].ImageID]
+
+    def get_paths_and_labels(self):
+        return self.paths_and_labels
+
+    def __repr__(self):
+        description = f'''
+        total number of images: {len(self.paths_and_labels["train_labels"])}
+        for each class: {Counter(self.paths_and_labels["train_labels"])}
+        '''
+        return description
