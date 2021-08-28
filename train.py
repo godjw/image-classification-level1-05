@@ -62,7 +62,7 @@ def train(helper):
     )
 
     Model = getattr(import_module("model"), args.model)
-    model = Model(num_classes=num_classes).to(device)
+    model = Model(num_classes=num_classes, freeze=args.freeze).to(device)
     model = torch.nn.DataParallel(model)
 
     criterion = get_criterion(args.criterion)
@@ -174,7 +174,7 @@ if __name__ == '__main__':
     parser.add_argument("--resize", nargs="+", type=list, default=(128, 96), help='resize size for image when training')
     parser.add_argument('--batch_size', type=int, default=64, help='input batch size for training (default: 64)')
     parser.add_argument('--val_batch_size', type=int, default=1000, help='input batch size for validation (default: 1000)')
-    parser.add_argument('--model', type=str, default='ResNet18PretrainedL12Frozen', help='model type (default: ResNet18PretrainedL12Frozen)')
+    parser.add_argument('--model', type=str, default='ResNet18Pretrained', help='model type (default: ResNet18Pretrained)')
     parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer type (default: Adam)')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate (default: 1e-3)')
     parser.add_argument('--val_ratio', type=float, default=0.2, help='ratio for validaton (default: 0.2)')
@@ -182,7 +182,8 @@ if __name__ == '__main__':
     parser.add_argument('--lr_decay_step', type=int, default=20, help='learning rate scheduler deacy step (default: 20)')
     parser.add_argument('--log_interval', type=int, default=20, help='how many batches to wait before logging training status')
     parser.add_argument('--name', default='exp', help='model to save at {SM_MODEL_DIR}/{name}')
-
+    parser.add_argument('--freeze', nargs='+', default =[], help='layers to freeze (default: [])')
+    
     args = parser.parse_args()
     print(args)
 

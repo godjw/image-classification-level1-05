@@ -9,7 +9,7 @@ import math
 
 
 class BaseModel(nn.Module):
-    def __init__(self, num_classes):
+    def __init__(self, num_classes, freeze=[]):
         super().__init__()
         self.conv1 = nn.Conv2d(3, 32, kernel_size=7, stride=1)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, stride=1)
@@ -18,6 +18,8 @@ class BaseModel(nn.Module):
         self.dropout2 = nn.Dropout(0.25)
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(128, num_classes)
+        for layer in freeze:
+            getattr(self.net, layer).requires_grad(False)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -38,16 +40,16 @@ class BaseModel(nn.Module):
         return self.fc(x)
 
 
-class ResNet18PretrainedL12Frozen(nn.Module):
-    def __init__(self, num_classes):
+class ResNet18Pretrained(nn.Module):
+    def __init__(self, num_classes, freeze=[]):
         super().__init__()
         self.net = models.resnet18(pretrained=True)
         self.net.fc = torch.nn.Linear(in_features=512, out_features=num_classes, bias=True)
         torch.nn.init.xavier_uniform_(self.net.fc.weight)
         stdv = 1. / math.sqrt(self.net.fc.weight.size(1))
         self.net.fc.bias.data.uniform_(-stdv, stdv)
-        self.net.layer1.requires_grad_(False)
-        self.net.layer2.requires_grad_(False)
+        for layer in freeze:
+            getattr(self.net, layer).requires_grad(False)
 
     def forward(self, x):
         return self.net(x)
