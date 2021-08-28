@@ -1,38 +1,41 @@
-import os
-from io import StringIO
-from contextlib import redirect_stdout
+import random
 
-from torchsummary import summary
+import matplotlib.pyplot as plt
 
-from data_utils import MetadataHelper
+from dataset import *
 
-class Logger:
-    def __init__(self, helper: MetadataHelper):
-        self.summary = {}
 
-    def summarize_transform(self, transform):
-        self.summary['transform'] = self._hook(
-            print,
-            "----------------------------------------------------------------",
-            'transform:',
-            "================================================================",
-            transform,
-            "----------------------------------------------------------------",
-            sep='\n'
-        )
+def get_lr(optimizer):
+    for param_group in optimizer.param_groups:
+        return param_group['lr']
 
-    def summarize_model(self, model, input_size):
-        self.summary['model'] = self._hook(summary, model=model, input_size=input_size)
 
-    def export(self, output_dir):
-        os.makedirs(output_dir, exist_ok=True)
-        with open(os.path.join(output_dir, 'log'), 'w') as f:
-            f.write(self.summary['transform'])
-        with open(os.path.join(output_dir, 'log'), 'a') as f:
-            f.write(self.summary['model'])
+def grid_image(imgs, labels, preds, n=16, shuffle=False):
+    batch_size = imgs.shape[0]
+    assert n <= batch_size
 
-    def _hook(self, func, *args, **kwargs):
-        iostream = StringIO()
-        with redirect_stdout(iostream):
-            func(*args, **kwargs)
-        return iostream.getvalue()
+    choices = random.choices(range(batch_size), k=n) if shuffle else list(range(n))
+    figure = plt.figure(figsize=(12, 18 + 2))  # cautions: hardcoded, 이미지 크기에 따라 figsize 를 조정해야 할 수 있습니다. T.T
+    plt.subplots_adjust(top=0.8)               # cautions: hardcoded, 이미지 크기에 따라 top 를 조정해야 할 수 있습니다. T.T
+    n_grid = np.ceil(n ** 0.5)
+    tasks = ["mask", "gender", "age"]
+    for idx, choice in enumerate(choices):
+        gt = labels[choice].item()
+        pred = preds[choice].item()
+        image = imgs[choice]
+        # title = f"gt: {gt}, pred: {pred}"
+        gt_decoded_labels = MaskBaseDataset.decode_multi_class(gt)
+        pred_decoded_labels = MaskBaseDataset.decode_multi_class(pred)
+        title = '\n'.join([
+            f'{task} - gt: {gt_label}, pred: {pred_label}'
+            for gt_label, pred_label, task
+            in zip(gt_decoded_labels, pred_decoded_labels, tasks)
+        ])
+
+        plt.subplot(n_grid, n_grid, idx + 1, title=title)
+        plt.xticks([])
+        plt.yticks([])
+        plt.grid(False)
+        plt.imshow(image, cmap=plt.cm.binary)
+
+    return figure
