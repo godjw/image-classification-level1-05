@@ -16,7 +16,7 @@ def load_model(model_dir, num_classes, device):
     model_path = os.path.join(model_dir, 'best.pth')
     model.load_state_dict(torch.load(model_path, map_location=device))
 
-    return model
+    return model #hi
 
 
 @torch.no_grad()
