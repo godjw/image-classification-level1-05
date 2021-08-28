@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from torchvision import models
 
 import numpy as np
+import math
 
 
 class BaseModel(nn.Module):
@@ -40,7 +41,13 @@ class BaseModel(nn.Module):
 class ResNet18PretrainedL12Frozen(nn.Module):
     def __init__(self, num_classes):
         super().__init__()
-        
+        self.net = models.resnet18(pretrained=True)
+        self.net.fc = torch.nn.Linear(in_features=512, out_features=num_classes, bias=True)
+        torch.nn.init.xavier_uniform_(self.net.fc.weight)
+        stdv = 1. / math.sqrt(self.net.fc.weight.size(1))
+        self.net.fc.bias.data.uniform_(-stdv, stdv)
+        self.net.layer1.requires_grad_(False)
+        self.net.layer2.requires_grad_(False)
 
     def forward(self, x):
-        pass
+        return self.net(x)
