@@ -15,6 +15,7 @@ import models
 from logger import Logger
 from validation import validate
 from inference import save_submission
+from loss import create_criterion
 
 device = torch.device('cuda' if torch.cuda.is_available else 'cpu')
 
@@ -35,7 +36,7 @@ model.layer2.requires_grad_(False)
 model = model.to(device)
 logger.summarize_model(model=model, input_size=(3, 512, 384))
 
-criterion = nn.MultiLabelSoftMarginLoss().to(device)
+criterion = create_criterion(config.loss_fn) 
 optimizer = optim.Adam(params=model.parameters(), lr=config.learning_rate)
 
 base_transforms = [
@@ -83,6 +84,7 @@ for epoch, (train_idxs, val_idxs) in enumerate(skf.split(train_img_paths, train_
 
         predictions = model(imgs)
         labels_one_hot = torch.zeros_like(predictions).scatter_(1, labels, 1)
+        print(labels_one_hot.dim)
         loss = criterion(predictions, labels_one_hot)
 
         running_loss += loss.item()
@@ -93,7 +95,7 @@ for epoch, (train_idxs, val_idxs) in enumerate(skf.split(train_img_paths, train_
         loss.backward()
         optimizer.step()
     
-    print(f'epoch: {epoch}/{config.n_epochs}\tacc: {(accumulated_accuracy / len(train_loader)) * 100:0.2f}%\tf1: {accumulated_f1 / len(train_loader):.3f}\tloss: {running_loss / len(train_loader):0.3f}')
+    print(f'epoch: {epoch}/{config.n_epochs + 1}\tacc: {(accumulated_accuracy / len(train_loader)) * 100:0.2f}%\tf1: {accumulated_f1 / len(train_loader):.3f}\tloss: {running_loss / len(train_loader):0.3f}')
 
     val_dataset = MaskClassifierDataset(
         img_paths=train_img_paths[val_idxs],

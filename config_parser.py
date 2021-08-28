@@ -16,6 +16,8 @@ class ConfigParser(ArgumentParser):
     learning_rate: float = 1e-3
     num_workers: int = 3
     stratified_k_fold: int = 2
+    loss_fn: str = "f1" # 'cross_entropy', 'focal', 'label_smoothing, 'f1', 'multilabel_softmargin'
+    
 
     def __init__(self, description):
         super().__init__(description=description)
