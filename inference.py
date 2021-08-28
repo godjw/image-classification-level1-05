@@ -13,7 +13,7 @@ def load_model(model_dir, num_classes, device):
     model_cls = getattr(import_module("model"), args.model)
     model = model_cls(num_classes=num_classes)
 
-    model_path = os.path.join(model_dir, 'best.pth')
+    model_path = os.path.join(model_dir, 'best.pt')
     model.load_state_dict(torch.load(model_path, map_location=device))
 
     return model
@@ -67,7 +67,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--batch_size', type=int, default=1000, help='input batch size for validing (default: 1000)')
     parser.add_argument('--resize', type=tuple, default=(96, 128), help='resize size for image when you trained (default: (96, 128))')
-    parser.add_argument('--model', type=str, default='BaseModel', help='model type (default: BaseModel)')
+    parser.add_argument('--model', type=str, default='ResNet18PretrainedL12Frozen', help='model type (default: ResNet18PretrainedL12Frozen)')
     
     args = parser.parse_args()
 
