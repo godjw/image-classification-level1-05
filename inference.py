@@ -13,8 +13,8 @@ def load_model(model_dir, num_classes, device):
     model_cls = getattr(import_module("model"), args.model)
     model = model_cls(num_classes=num_classes)
 
-    model_path = os.path.join(model_dir, 'best.pt')
-    model.load_state_dict(torch.load(model_path, map_location=device))
+    model_path = os.path.join(model_dir, args.model_name)
+    model = torch.load(model_path, map_location=device)
 
     return model 
 
@@ -62,8 +62,10 @@ if __name__ == '__main__':
 
     # Container environment
     parser.add_argument('--data_dir', type=str, default=os.environ.get('SM_CHANNEL_EVAL', '/opt/ml/input/data/eval'))
-    parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_CHANNEL_MODEL', './model/exp5'))
+    parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_CHANNEL_MODEL', './model/exp'))
+    parser.add_argument('--exp_num', type=str, default='')
     parser.add_argument('--output_dir', type=str, default=os.environ.get('SM_OUTPUT_DATA_DIR', './output'))
+    parser.add_argument('--model_name', type=str, default='best.pt')
 
     parser.add_argument('--batch_size', type=int, default=1000, help='input batch size for validing (default: 1000)')
     parser.add_argument('--resize', type=tuple, default=(96, 128), help='resize size for image when you trained (default: (96, 128))')
@@ -72,4 +74,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
-    inference(data_dir=args.data_dir, model_dir=args.model_dir, output_dir=args.output_dir)
+    inference(data_dir=args.data_dir, model_dir=args.model_dir+args.exp_num, output_dir=args.output_dir)
+    model_dir=args.model_dir+args.exp_num
+    print(model_dir)
+    print(args.model_name)
