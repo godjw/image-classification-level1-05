@@ -76,7 +76,7 @@ def train(helper):
 
     save_dir = helper.get_save_dir(dump=False)
     writer = SummaryWriter(log_dir=save_dir)
-    with open(os.path.join(save_dir, 'config.json'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(save_dir, f'{args.model_name}.json'), 'w', encoding='utf-8') as f:
         json.dump(vars(args), f, ensure_ascii=False, indent=4)
 
     best_val_acc = 0
@@ -166,7 +166,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--data_dir', type=str, default=os.environ.get('SM_CHANNEL_TRAIN', '/opt/ml/input/data/train/images'))
-    parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_MODEL_DIR', './model'))
+    parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_MODEL_DIR', '../model'))
 
     parser.add_argument('--seed', type=int, default=42, help='random seed (default: 42)')
     parser.add_argument('--epochs', type=int, default=5, help='number of epochs to train (default: 5)')
