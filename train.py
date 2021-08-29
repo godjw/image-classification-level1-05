@@ -185,6 +185,7 @@ if __name__ == '__main__':
     parser.add_argument('--name', default='exp', help='model to save at {SM_MODEL_DIR}/{name}')
     parser.add_argument('--mode', default='all', help='select mask, age, gender, all')
     parser.add_argument('--model_name', default='best', help='custom model name')
+    parser.add_argument('--freeze', nargs='+', default =[], help='layers to freeze (default: [])')
     args = parser.parse_args()
     print(args)
 
