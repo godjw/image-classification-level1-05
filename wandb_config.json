@@ -1,0 +1,12 @@
+{
+    "init" : {
+              "project" : "project",
+              "entity" : "aim5",
+              "name" : "name"
+             },
+ 
+    "watch": {
+              "log": "all",
+              "log_freq": 10  
+             }
+}

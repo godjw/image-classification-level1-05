@@ -77,20 +77,15 @@ def train(helper):
     )
     scheduler = StepLR(optimizer, args.lr_decay_step, gamma=0.5)
 
-<<<<<<< HEAD
-    save_dir = helper.get_save_dir(dump=False)
-    writer = SummaryWriter(log_dir=save_dir) 
-    with open(os.path.join(save_dir, 'config.json'), 'w', encoding='utf-8') as f:
-=======
     save_dir = helper.get_save_dir(dump=args.dump)
     writer = SummaryWriter(log_dir=save_dir)
     with open(os.path.join(save_dir, f'{args.model_name}.json'), 'w', encoding='utf-8') as f:
->>>>>>> origin/master
         json.dump(vars(args), f, ensure_ascii=False, indent=4)
 
     #get_wandb
     #wandb watch -- tell wandb to watch what the model gets up to
-    wandb.watch(model, criterion, log="all", log_freq=10)
+    log, log_freq = wandb_file["watch"].values()
+    wandb.watch(model, criterion, log=log, log_freq=log_freq)
 
     best_val_acc = 0
     best_val_loss = np.inf
@@ -183,8 +178,8 @@ def train(helper):
             #get_wandb
             #wandb test log
             wandb.log({"Test/epoch": epoch,
-                       "Test/loss": val_loss,
-                       "Test/accuracy": val_acc})
+                    "Test/loss": val_loss,
+                    "Test/accuracy": val_acc})
         model.train()
 
 
@@ -216,10 +211,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     #get_wandb
-    #wandb login
-    wandb.login()
-    #wandb 
-    wandb.init(project = 'test-wandb', entity='aim5', config=args)
+    wandb_file = json.load(open('wandb_config.json'))
+    project, entity, name = wandb_file["init"].values()
+    wandb.init(project=project, entity=entity, name=name, config=args) #wandb 초기화
     print(args)
 
     helper = settings.SettingsHelper(
