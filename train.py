@@ -89,7 +89,7 @@ def train(helper):
     scheduler = StepLR(optimizer, args.lr_decay_step, gamma=0.5)
 
     save_dir = helper.get_save_dir(dump=False)
-    writer = SummaryWriter(log_dir=save_dir) ##물어보기 어떤 건지
+    writer = SummaryWriter(log_dir=save_dir) 
     with open(os.path.join(save_dir, 'config.json'), 'w', encoding='utf-8') as f:
         json.dump(vars(args), f, ensure_ascii=False, indent=4)
 
