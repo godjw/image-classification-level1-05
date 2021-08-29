@@ -147,9 +147,10 @@ def train(helper):
             best_val_loss = min(best_val_loss, val_loss)
             if val_acc > best_val_acc:
                 print(f"New best model for val accuracy : {val_acc:3.2f}%! saving the best model..")
-                torch.save(model.module.state_dict(), os.path.join(save_dir, 'best.pt'))
+                torch.save(model, os.path.join(save_dir, f'{args.model_name}.pt'))
                 best_val_acc = val_acc
-            torch.save(model.module.state_dict(), os.path.join(save_dir, 'last.pt'))
+
+            # torch.save(model.module.state_dict(), os.path.join(save_dir, 'last.pt'))
             print(
                 f'Validation:\n'
                 f'accuracy: {val_acc:>3.2%}\tloss: {val_loss:>4.2f}\n'
@@ -182,7 +183,8 @@ if __name__ == '__main__':
     parser.add_argument('--lr_decay_step', type=int, default=20, help='learning rate scheduler deacy step (default: 20)')
     parser.add_argument('--log_interval', type=int, default=20, help='how many batches to wait before logging training status')
     parser.add_argument('--name', default='exp', help='model to save at {SM_MODEL_DIR}/{name}')
-
+    parser.add_argument('--mode', default='all', help='select mask, age, gender, all')
+    parser.add_argument('--model_name', default='best', help='custom model name')
     args = parser.parse_args()
     print(args)
 

@@ -26,7 +26,7 @@ class SettingsHelper:
 
     def get_save_dir(self, dump=False):
         save_dir = Path(os.path.join(self.args.model_dir, self.args.name))
-        if not save_dir.exists() or dump:
+        if not save_dir.exists() or dump or self.args.name != 'exp':
             return str(save_dir)
         else:
             dirs = glob.glob(f'{save_dir}*')
