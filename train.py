@@ -74,7 +74,7 @@ def train(helper):
     )
     scheduler = StepLR(optimizer, args.lr_decay_step, gamma=0.5)
 
-    save_dir = helper.get_save_dir(dump=False)
+    save_dir = helper.get_save_dir(dump=args.dump)
     writer = SummaryWriter(log_dir=save_dir)
     with open(os.path.join(save_dir, f'{args.model_name}.json'), 'w', encoding='utf-8') as f:
         json.dump(vars(args), f, ensure_ascii=False, indent=4)
@@ -182,11 +182,11 @@ if __name__ == '__main__':
     parser.add_argument('--criterion', type=str, default='cross_entropy', help='criterion type (default: cross_entropy)')
     parser.add_argument('--lr_decay_step', type=int, default=20, help='learning rate scheduler deacy step (default: 20)')
     parser.add_argument('--log_interval', type=int, default=20, help='how many batches to wait before logging training status')
-    parser.add_argument('--name', default='exp', help='model to save at {SM_MODEL_DIR}/{name}')
-    parser.add_argument('--mode', default='all', help='select mask, age, gender, all')
-    parser.add_argument('--model_name', default='best', help='custom model name')
+    parser.add_argument('--name', type=str, default='exp', help='model to save at {SM_MODEL_DIR}/{name}')
+    parser.add_argument('--mode', type=str, default='all', help='select mask, age, gender, all')
+    parser.add_argument('--model_name', type=str, default='best', help='custom model name')
     parser.add_argument('--freeze', nargs='+', default =[], help='layers to freeze (default: [])')
-
+    parser.add_argument('--dump', type=bool, default=False, help="choose dump or not to save model")
     args = parser.parse_args()
     print(args)
 
