@@ -19,8 +19,11 @@ from loss import get_criterion
 import settings
 import logger
 
+#get_wandb
+import wandb
 
 def train(helper):
+    
     args = helper.args
     device = helper.device
     is_cuda = helper.device == torch.device('cuda')
@@ -86,9 +89,13 @@ def train(helper):
     scheduler = StepLR(optimizer, args.lr_decay_step, gamma=0.5)
 
     save_dir = helper.get_save_dir(dump=False)
-    writer = SummaryWriter(log_dir=save_dir)
+    writer = SummaryWriter(log_dir=save_dir) ##물어보기 어떤 건지
     with open(os.path.join(save_dir, 'config.json'), 'w', encoding='utf-8') as f:
         json.dump(vars(args), f, ensure_ascii=False, indent=4)
+
+    #get_wandb
+    #wandb watch -- tell wandb to watch what the model gets up to
+    wandb.watch(model, criterion, log="all", log_freq=10)
 
     best_val_acc = 0
     best_val_loss = np.inf
@@ -114,6 +121,7 @@ def train(helper):
                 train_loss = loss_value / args.log_interval
                 train_acc = matches / args.log_interval
                 current_lr = logger.get_lr(optimizer)
+         
                 print(
                     f'Epoch: {epoch:0{len(str(args.epochs))}d}/{args.epochs} '
                     f'[{idx + 1:0{len(str(len(train_loader)))}d}/{len(train_loader)}]\n'
@@ -121,6 +129,12 @@ def train(helper):
                 )
                 writer.add_scalar("Train/loss", train_loss, epoch * len(train_loader) + idx)
                 writer.add_scalar("Train/accuracy", train_acc, epoch * len(train_loader) + idx)
+
+                #get_wandb
+                #wandb train log
+                wandb.log({"Train/epoch": epoch,
+                        "Train/loss": train_loss,
+                        "Train/accuracy": train_acc})
 
                 loss_value = 0
                 matches = 0
@@ -169,6 +183,12 @@ def train(helper):
             writer.add_scalar("Val/loss", val_loss, epoch)
             writer.add_scalar("Val/accuracy", val_acc, epoch)
             writer.add_figure("results", figure, epoch)
+
+            #get_wandb
+            #wandb test log
+            wandb.log({"Test/epoch": epoch,
+                       "Test/loss": val_loss,
+                       "Test/accuracy": val_acc})
         model.train()
 
 
@@ -195,6 +215,12 @@ if __name__ == '__main__':
     parser.add_argument('--name', default='exp', help='model to save at {SM_MODEL_DIR}/{name}')
 
     args = parser.parse_args()
+
+    #get_wandb
+    #wandb login
+    wandb.login()
+    #wandb 
+    wandb.init(project = 'test-wandb', entity='aim5', config=args)
     print(args)
 
     helper = settings.SettingsHelper(
