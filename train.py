@@ -172,9 +172,9 @@ def train(helper):
             writer.add_scalar("Val/accuracy", val_acc, epoch)
             writer.add_figure("results", figure, epoch)
 
-            wandb.log({"Test/epoch": epoch,
-                    "Test/loss": val_loss,
-                    "Test/accuracy": val_acc})
+            wandb.log({"Val/epoch": epoch,
+                    "Val/loss": val_loss,
+                    "Val/accuracy": val_acc})
         model.train()
 
 
