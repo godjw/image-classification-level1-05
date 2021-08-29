@@ -182,7 +182,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr_decay_step', type=int, default=20, help='learning rate scheduler deacy step (default: 20)')
     parser.add_argument('--log_interval', type=int, default=20, help='how many batches to wait before logging training status')
     parser.add_argument('--name', default='exp', help='model to save at {SM_MODEL_DIR}/{name}')
-
+    parser.add_argument('--freeze', nargs='+', default =[], help='layers to freeze (default: [])')
     args = parser.parse_args()
     print(args)
 
