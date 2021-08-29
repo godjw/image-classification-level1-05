@@ -19,7 +19,6 @@ from loss import get_criterion
 import settings
 import logger
 
-#get_wandb
 import wandb
 
 def train(helper):
@@ -120,8 +119,6 @@ def train(helper):
                 writer.add_scalar("Train/loss", train_loss, epoch * len(train_loader) + idx)
                 writer.add_scalar("Train/accuracy", train_acc, epoch * len(train_loader) + idx)
 
-                #get_wandb
-                #wandb train log
                 wandb.log({"Train/epoch": epoch,
                         "Train/loss": train_loss,
                         "Train/accuracy": train_acc})
@@ -175,8 +172,6 @@ def train(helper):
             writer.add_scalar("Val/accuracy", val_acc, epoch)
             writer.add_figure("results", figure, epoch)
 
-            #get_wandb
-            #wandb test log
             wandb.log({"Test/epoch": epoch,
                     "Test/loss": val_loss,
                     "Test/accuracy": val_acc})
@@ -210,7 +205,6 @@ if __name__ == '__main__':
     parser.add_argument('--dump', type=bool, default=False, help="choose dump or not to save model")
     args = parser.parse_args()
 
-    #get_wandb
     wandb_file = json.load(open('wandb_config.json'))
     project, entity, name = wandb_file["init"].values()
     wandb.init(project=project, entity=entity, name=name, config=args) #wandb 초기화
