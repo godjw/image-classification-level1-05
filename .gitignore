@@ -3,5 +3,4 @@ __pycache__
 model/
 .pyc
 .wandb
-
 output/
