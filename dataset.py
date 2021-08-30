@@ -131,6 +131,13 @@ class MaskBaseDataset(Dataset):
         return self.labels[index]
 
     @staticmethod
+    def decode_multi_class(multi_class_label):
+        mask_label = (multi_class_label // 6) % 3
+        gender_label = (multi_class_label // 3) % 2
+        age_label = multi_class_label % 3
+        return (mask_label, gender_label, age_label)
+
+    @staticmethod
     def denormalize_image(image, mean, std):
         _img = image.copy()
         _img *= std

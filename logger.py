@@ -14,15 +14,21 @@ def grid_image(imgs, labels, preds, n=16, shuffle=False):
     batch_size = imgs.shape[0]
     assert n <= batch_size
 
-    choices = random.choices(range(batch_size), k=n) if shuffle else list(range(n))
-    figure = plt.figure(figsize=(12, 18 + 2))  # cautions: hardcoded, 이미지 크기에 따라 figsize 를 조정해야 할 수 있습니다. T.T
-    plt.subplots_adjust(top=0.8)               # cautions: hardcoded, 이미지 크기에 따라 top 를 조정해야 할 수 있습니다. T.T
+    choices = random.choices(
+        range(batch_size), k=n) if shuffle else list(range(n))
+    # cautions: hardcoded, 이미지 크기에 따라 figsize 를 조정해야 할 수 있습니다. T.T
+    figure = plt.figure(figsize=(12, 18 + 2))
+    # cautions: hardcoded, 이미지 크기에 따라 top 를 조정해야 할 수 있습니다. T.T
+    plt.subplots_adjust(top=0.8)
     n_grid = np.ceil(n ** 0.5)
     tasks = ["mask", "gender", "age"]
     for idx, choice in enumerate(choices):
         gt = labels[choice].item()
         pred = preds[choice].item()
         image = imgs[choice]
+        print(gt)
+        print(pred)
+        print('\n\n\n\n')
         # title = f"gt: {gt}, pred: {pred}"
         gt_decoded_labels = MaskBaseDataset.decode_multi_class(gt)
         pred_decoded_labels = MaskBaseDataset.decode_multi_class(pred)
