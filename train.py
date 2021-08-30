@@ -8,9 +8,8 @@ import torch
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from sklearn.metrics import f1_score
-from torchvision import models
 
+from sklearn.metrics import f1_score
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
@@ -81,6 +80,9 @@ def train(helper):
     best_val_acc = 0
     best_val_loss = np.inf
     best_f1 = 0
+
+    val_labels = []
+    val_preds = []
     for epoch in range(1, args.epochs + 1):
         loss_value = 0
         matches = 0
@@ -129,14 +131,18 @@ def train(helper):
             val_acc_items = []
             val_f1_items = []
         
-            figure = None
             for val_batch in tqdm(val_loader, colour='GREEN'):
-                inputs, labels = val_batch
-                inputs = inputs.to(device)
+                imgs, labels = val_batch
+                if epoch == args.epochs:
+                    val_labels.extend(map(torch.Tensor.item, labels))
+
+                imgs = imgs.to(device)
                 labels = labels.to(device)
 
-                outs = model(inputs)
+                outs = model(imgs)
                 preds = torch.argmax(outs, dim=-1)
+                if epoch == args.epochs:
+                    val_preds.extend(map(torch.Tensor.item, preds))
 
                 loss_item = criterion(outs, labels).item()
                 acc_item = (labels == preds).float().sum().item()
@@ -145,27 +151,19 @@ def train(helper):
                 val_acc_items.append(acc_item)
                 val_f1_items.append(f1_item)
 
-                if figure is None:
-                    imgs = torch.clone(inputs).detach().cpu().permute(0, 2, 3, 1).numpy()
-                    imgs = Dataset.denormalize_image(imgs, dataset.mean, dataset.std)
-                    figure = logger.grid_image(
-                        imgs=imgs, labels=labels, preds=preds,
-                        n=16, shuffle=args.dataset != "MaskSplitByProfileDataset"
-                    )
-
             val_loss = np.sum(val_loss_items) / len(val_loader)
             val_acc = np.sum(val_acc_items) / len(val_set)
             val_f1 = np.average(val_f1_items) 
             best_val_loss = min(best_val_loss, val_loss)
             if val_acc > best_val_acc:
-                print(f"New best model for val accuracy : {val_acc:3.2f}%! saving the best model..")
+                print(f"New best model for val accuracy : {val_acc:3.2%}! saving the best model..")
                 torch.save(model, os.path.join(save_dir, f'{args.model_name}.pt'))
                 best_val_acc = val_acc
             if val_f1 > best_f1:
-                print(f"New best model for f1 : {val_f1:3.2f}%! saving the best model..")
+                print(f"New best model for f1 : {val_f1:.3f}! saving the best model..")
                 torch.save(model, os.path.join(save_dir, f'{args.model_name}f1.pt'))
                 best_f1 = val_f1
-            # torch.save(model.module.state_dict(), os.path.join(save_dir, 'last.pt'))
+
             print(
                 f'Validation:\n'
                 f'accuracy: {val_acc:>3.2%}\tloss: {val_loss:>4.2f}\tf1: {val_f1:>4.2f}\n'
@@ -174,8 +172,13 @@ def train(helper):
             writer.add_scalar("Val/loss", val_loss, epoch)
             writer.add_scalar("Val/accuracy", val_acc, epoch)
             writer.add_scalar("Val/f1", val_f1, epoch)
-            writer.add_figure("results", figure, epoch)
+
         model.train()
+    logger.save_confusion_matrix(
+        labels=val_labels,
+        preds=val_preds,
+        save_path=os.path.join(save_dir, 'confusion_matrix.png')
+    )
 
 
 if __name__ == '__main__':
