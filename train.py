@@ -76,7 +76,7 @@ def train(helper):
         drop_last=True,
     )
 
-    val_loader = DataLoader(
+    valid_loader = DataLoader(
         valid_set,
         batch_size=args.val_batch_size,
         num_workers=multiprocessing.cpu_count() // 2,
@@ -159,7 +159,7 @@ def train(helper):
             val_f1_items = []
 
             figure = None
-            for val_batch in tqdm(val_loader, colour='GREEN'):
+            for val_batch in tqdm(valid_loader, colour='GREEN'):
                 inputs, labels = val_batch
                 inputs = inputs.to(device)
                 labels = labels.to(device)
@@ -185,8 +185,8 @@ def train(helper):
                         n=16, shuffle=args.dataset != "MaskSplitByProfileDataset"
                     )
 
-            val_loss = np.sum(val_loss_items) / len(val_loader)
-            val_acc = np.sum(val_acc_items) / len(val_set)
+            val_loss = np.sum(val_loss_items) / len(valid_loader)
+            val_acc = np.sum(val_acc_items) / len(valid_set)
             val_f1 = np.average(val_f1_items)
             best_val_loss = min(best_val_loss, val_loss)
             if val_acc > best_val_acc:
