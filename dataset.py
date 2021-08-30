@@ -5,11 +5,7 @@ from pathlib import Path
 # Other Libs
 import numpy as np
 import pandas as pd
-<<<<<<< HEAD
-from tqdm import tqdm
-=======
 import numpy as np
->>>>>>> df700989e03477e4958d780b18d80e98cc7fd54f
 import torch
 from torch.utils.data import Dataset
 from PIL import Image
@@ -129,19 +125,11 @@ class MaskBaseDataset(Dataset):
         return image_transform, label
 
     def __len__(self):
-<<<<<<< HEAD
-        return len(self.data_info)
-
-    def read_image(self, index):
-        image_path = self.img_paths[index]
-        return Image.open(image_path)
-=======
         return len(self.img_paths)
 
     def read_image(self, index):
         img_path = self.img_paths[index]
         return Image.open(img_path)
->>>>>>> df700989e03477e4958d780b18d80e98cc7fd54f
 
     def get_label(self, index):
         return self.labels[index]
