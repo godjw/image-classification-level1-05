@@ -23,7 +23,7 @@ def train(helper):
     args = helper.args
     device = helper.device
     is_cuda = helper.device == torch.device('cuda')
-
+    
     Dataset = getattr(import_module("dataset"), args.dataset)
     dataset = Dataset(
         data_dir=args.data_dir,
@@ -159,7 +159,10 @@ def train(helper):
             best_val_loss = min(best_val_loss, val_loss)
             if val_acc > best_val_acc:
                 print(f"New best model for val accuracy : {val_acc:3.2f}%! saving the best model..")
-                torch.save(model, os.path.join(save_dir, f'{args.model_name}.pt'))
+                if args.mode == "all":
+                    torch.save(model, os.path.join(save_dir, f'{args.model_name}.pt'))
+                else:
+                    torch.save(model, os.path.join(save_dir, f'{args.moode}.pt'))
                 best_val_acc = val_acc
             if val_f1 > best_f1:
                 print(f"New best model for f1 : {val_f1:3.2f}%! saving the best model..")
