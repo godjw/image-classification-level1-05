@@ -19,10 +19,7 @@ from loss import get_criterion
 import settings
 import logger
 
-<<<<<<< HEAD
 import wandb
-=======
->>>>>>> 85176d6a3b0bed3037dca777a63966cfd1125b46
 
 def train(helper):
     
@@ -113,13 +110,8 @@ def train(helper):
 
             loss_value += loss.item()
             matches += (preds == labels).float().mean().item()
-<<<<<<< HEAD
-
-            accumulated_f1 += f1_score(labels.cpu().numpy(), preds.cpu().numpy(), average='macro')
-=======
             accumulated_f1 += f1_score(labels.cpu().numpy(),
                                        preds.cpu().numpy(), average='macro')
->>>>>>> 85176d6a3b0bed3037dca777a63966cfd1125b46
             iter_count += 1
 
             if (idx + 1) % args.log_interval == 0:
