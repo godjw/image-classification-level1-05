@@ -10,7 +10,6 @@ from tqdm import tqdm
 import torch
 from torch.utils.data import Dataset
 from PIL import Image
-from tqdm import tqdm
 
 from transform import BaseTransform
 
@@ -31,7 +30,6 @@ class TrainInfo():
         paths_pre.loc[:] = str(self.data_dir)
         paths_post = paths.str.split('/images').str[1]
         self.data['FullPath'] = paths_pre.str.cat(paths_post)
-        print(self.data['FullPath'])
 
     def split_dataset(self, val_size=0.2, crit_col='path', shuffle=True, random_state=32):
         if random_state:

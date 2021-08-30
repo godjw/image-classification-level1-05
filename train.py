@@ -108,11 +108,6 @@ def train(helper):
     with open(os.path.join(save_dir, f'{args.model_name}.json'), 'w', encoding='utf-8') as f:
         json.dump(vars(args), f, ensure_ascii=False, indent=4)
 
-    #get_wandb
-    #wandb watch -- tell wandb to watch what the model gets up to
-    #log, log_freq = wandb_file["watch"].values()
-    #wandb.watch(model, criterion, log=log, log_freq=log_freq)
-
     best_val_acc = 0
     best_val_loss = np.inf
     best_f1 = 0
