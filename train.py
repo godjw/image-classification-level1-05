@@ -31,7 +31,7 @@ def train(helper):
         std=(0.23318603, 0.24300033, 0.24567522)
     )
     num_classes = dataset.num_classes
-
+    
     Transform = getattr(import_module("transform"), args.transform)
     transform = Transform(
         resize=args.resize,
@@ -159,7 +159,7 @@ def train(helper):
             best_val_loss = min(best_val_loss, val_loss)
             if val_acc > best_val_acc:
                 print(f"New best model for val accuracy : {val_acc:3.2f}%! saving the best model..")
-                torch.save(model, os.path.join(save_dir, f'{args.model_name}acc.pt'))
+                torch.save(model, os.path.join(save_dir, f'{args.model_name}.pt'))
                 best_val_acc = val_acc
             if val_f1 > best_f1:
                 print(f"New best model for f1 : {val_f1:3.2f}%! saving the best model..")
@@ -178,6 +178,7 @@ def train(helper):
         model.train()
 
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
@@ -186,7 +187,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--seed', type=int, default=42, help='random seed (default: 42)')
     parser.add_argument('--epochs', type=int, default=5, help='number of epochs to train (default: 5)')
-    parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset transform type (default: MaskBaseDataset)')
+    parser.add_argument('--dataset', type=str, default='MaskClassifierDataset', help='dataset transform type (default: MaskBaseDataset)')
     parser.add_argument('--transform', type=str, default='BaseTransform', help='data transform type (default: BaseTransform)')
     parser.add_argument("--resize", nargs="+", type=list, default=(128, 96), help='resize size for image when training')
     parser.add_argument('--batch_size', type=int, default=64, help='input batch size for training (default: 64)')
