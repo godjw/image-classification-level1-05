@@ -3,10 +3,14 @@ import random
 from pathlib import Path
 
 # Other Libs
+import numpy as np
 import pandas as pd
+from tqdm import tqdm
 import torch
 from torch.utils.data import Dataset
 from PIL import Image
+
+from transform import BaseTransform
 
 
 class TrainInfo():
@@ -83,6 +87,7 @@ class MaskBaseDataset(Dataset):
         self.mean = mean
         self.std = std
         self.transform = None
+        self.num_classes = 18
 
         self.setup()
         self.calc_statistics()
@@ -118,14 +123,14 @@ class MaskBaseDataset(Dataset):
         return image_transform, label
 
     def __len__(self):
-        return len(self.image_paths)
+        return len(self.data_info)
 
     def read_image(self, index):
-        image_path = self.image_paths[index]
+        image_path = self.img_paths[index]
         return Image.open(image_path)
 
     def get_label(self, index):
-        return self.mask_labels[index].value
+        return self.labels[index]
 
     @staticmethod
     def denormalize_image(image, mean, std):

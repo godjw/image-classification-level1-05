@@ -19,29 +19,47 @@ from loss import get_criterion
 import settings
 import logger
 
+from dataset import MaskBaseDataset, TrainInfo
+
 
 def train(helper):
     args = helper.args
     device = helper.device
     is_cuda = helper.device == torch.device('cuda')
 
-    Dataset = getattr(import_module("dataset"), args.dataset)
-    dataset = Dataset(
-        data_dir=args.data_dir,
+    # Dataset = getattr(import_module("dataset"), args.dataset)
+    data_info = TrainInfo()
+    train_df, valid_df, _ = data_info.split_dataset(val_size=0.2)
+    
+    
+    train_set = MaskBaseDataset(
+        train_df,
         mean=(0.56019358, 0.52410121, 0.501457),
         std=(0.23318603, 0.24300033, 0.24567522)
-    )
-    num_classes = dataset.num_classes
+        )
+    val_set = MaskBaseDataset(
+        valid_df,
+        mean=(0.56019358, 0.52410121, 0.501457),
+        std=(0.23318603, 0.24300033, 0.24567522)
+        )
+
+    # dataset = Dataset(
+    #     data_dir=args.data_dir,
+    #     mean=(0.56019358, 0.52410121, 0.501457),
+    #     std=(0.23318603, 0.24300033, 0.24567522)
+    # )
+    num_classes = train_set.num_classes
 
     Transform = getattr(import_module("transform"), args.transform)
     transform = Transform(
         resize=args.resize,
-        mean=dataset.mean,
-        std=dataset.std,
+        mean=train_set.mean,
+        std=train_set.std,
     )
-    dataset.set_transform(transform)
+    train_set.set_transform(transform)
+    val_set.set_transform(transform)
 
-    train_set, val_set = dataset.split_dataset(val_size=0.2)
+    # train_set, val_set = dataset.split_dataset(val_size=0.2)
 
     train_loader = DataLoader(
         train_set,
@@ -154,8 +172,8 @@ def train(helper):
                 if figure is None:
                     imgs = torch.clone(inputs).detach(
                     ).cpu().permute(0, 2, 3, 1).numpy()
-                    imgs = Dataset.denormalize_image(
-                        imgs, dataset.mean, dataset.std)
+                    imgs = train_set.denormalize_image(
+                        imgs, train_set.mean, train_set.std)
                     figure = logger.grid_image(
                         imgs=imgs, labels=labels, preds=preds,
                         n=16, shuffle=args.dataset != "MaskSplitByProfileDataset"
