@@ -52,7 +52,9 @@ def train(helper):
         std=train_set.std,
     )
     train_set.set_transform(transform)
-    val_set.set_transform(transform)
+    valid_set.set_transform(transform)
+
+    dataset.set_transform(transform)
 
     """
     Please fill the code
