@@ -202,7 +202,7 @@ if __name__ == '__main__':
                         help='random seed (default: 42)')
     parser.add_argument('--epochs', type=int, default=5,
                         help='number of epochs to train (default: 5)')
-    parser.add_argument('--dataset', type=str, default='MaskClassifierDataset',
+    parser.add_argument('--dataset', type=str, default='MaskBaseDataset',
                         help='dataset transform type (default: MaskBaseDataset)')
     parser.add_argument('--transform', type=str, default='BaseTransform',
                         help='data transform type (default: BaseTransform)')
