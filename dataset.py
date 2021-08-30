@@ -16,7 +16,7 @@ class MaskClassifierDataset(Dataset):
         self.transform = transform
 
     def __len__(self):
-        return len(list(img_paths))
+        return len(list(self.img_paths))
 
     def __getitem__(self, index):
         image = Image.open(self.img_paths[index])
