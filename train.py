@@ -8,7 +8,7 @@ import torch
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-
+from sklearn.metrics import f1_score
 from torchvision import models
 
 import matplotlib.pyplot as plt
@@ -18,7 +18,6 @@ from tqdm import tqdm
 from loss import get_criterion
 import settings
 import logger
-
 
 def train(helper):
     args = helper.args
@@ -81,9 +80,13 @@ def train(helper):
 
     best_val_acc = 0
     best_val_loss = np.inf
+    best_f1 = 0
     for epoch in range(1, args.epochs + 1):
         loss_value = 0
         matches = 0
+        accumulated_f1 = 0
+        iter_count = 0
+
         for idx, (imgs, labels) in enumerate(train_loader):
             imgs = imgs.to(device)
             labels = labels.to(device)
@@ -98,18 +101,22 @@ def train(helper):
 
             loss_value += loss.item()
             matches += (preds == labels).float().mean().item()
+            accumulated_f1 += f1_score(labels.cpu().numpy(), preds.cpu().numpy(), average='macro')
+            iter_count += 1
             
             if (idx + 1) % args.log_interval == 0:
                 train_loss = loss_value / args.log_interval
                 train_acc = matches / args.log_interval
+                train_f1 = accumulated_f1 / iter_count
                 current_lr = logger.get_lr(optimizer)
                 print(
                     f'Epoch: {epoch:0{len(str(args.epochs))}d}/{args.epochs} '
                     f'[{idx + 1:0{len(str(len(train_loader)))}d}/{len(train_loader)}]\n'
-                    f'training accuracy: {train_acc:>3.2%}\ttraining loss: {train_loss:>4.4f}\tlearning rate: {current_lr}\n'
+                    f'training accuracy: {train_acc:>3.2%}\ttraining loss: {train_loss:>4.4f}\ttraining f1: {train_f1:>4.4f}\tlearning rate: {current_lr}\n'
                 )
                 writer.add_scalar("Train/loss", train_loss, epoch * len(train_loader) + idx)
                 writer.add_scalar("Train/accuracy", train_acc, epoch * len(train_loader) + idx)
+                writer.add_scalar("Train/f1", train_f1, epoch * len(train_loader) + idx)   
 
                 loss_value = 0
                 matches = 0
@@ -120,6 +127,8 @@ def train(helper):
         with torch.no_grad():
             val_loss_items = []
             val_acc_items = []
+            val_f1_items = []
+        
             figure = None
             for val_batch in tqdm(val_loader, colour='GREEN'):
                 inputs, labels = val_batch
@@ -131,8 +140,10 @@ def train(helper):
 
                 loss_item = criterion(outs, labels).item()
                 acc_item = (labels == preds).float().sum().item()
+                f1_item = f1_score(labels.cpu().numpy(), preds.cpu().numpy(), average='macro')
                 val_loss_items.append(loss_item)
                 val_acc_items.append(acc_item)
+                val_f1_items.append(f1_item)
 
                 if figure is None:
                     imgs = torch.clone(inputs).detach().cpu().permute(0, 2, 3, 1).numpy()
@@ -144,20 +155,25 @@ def train(helper):
 
             val_loss = np.sum(val_loss_items) / len(val_loader)
             val_acc = np.sum(val_acc_items) / len(val_set)
+            val_f1 = np.average(val_f1_items) 
             best_val_loss = min(best_val_loss, val_loss)
             if val_acc > best_val_acc:
                 print(f"New best model for val accuracy : {val_acc:3.2f}%! saving the best model..")
                 torch.save(model, os.path.join(save_dir, f'{args.model_name}.pt'))
                 best_val_acc = val_acc
-
+            if val_f1 > best_f1:
+                print(f"New best model for f1 : {val_f1:3.2f}%! saving the best model..")
+                torch.save(model, os.path.join(save_dir, f'{args.model_name}f1.pt'))
+                best_f1 = val_f1
             # torch.save(model.module.state_dict(), os.path.join(save_dir, 'last.pt'))
             print(
                 f'Validation:\n'
-                f'accuracy: {val_acc:>3.2%}\tloss: {val_loss:>4.2f}\n'
+                f'accuracy: {val_acc:>3.2%}\tloss: {val_loss:>4.2f}\tf1: {val_f1:>4.2f}\n'
                 f'best acc : {best_val_acc:>3.2%}\tbest loss: {best_val_loss:>4.2f}\n'
             )
             writer.add_scalar("Val/loss", val_loss, epoch)
             writer.add_scalar("Val/accuracy", val_acc, epoch)
+            writer.add_scalar("Val/f1", val_f1, epoch)
             writer.add_figure("results", figure, epoch)
         model.train()
 
