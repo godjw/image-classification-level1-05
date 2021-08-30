@@ -25,12 +25,22 @@ def train(helper):
     device = helper.device
     is_cuda = helper.device == torch.device('cuda')
 
-    Dataset = getattr(import_module("dataset"), args.dataset)
-    dataset = Dataset(
-        data_dir=args.data_dir,
-        mean=(0.56019358, 0.52410121, 0.501457),
-        std=(0.23318603, 0.24300033, 0.24567522)
+    # processed_train.csv
+    DataInfo = getattr(import_module("dataset"), "TrainInfo")
+    data_info = DataInfo(
+        file_dir=None,
+        data_dir=args.data_dir
     )
+    data_df = data_info.data
+    train_df, valid_df, dist_df = data_info.split_dataset(args.val_ratio)
+
+    # dataset
+    mean = (0.56019358, 0.52410121, 0.501457)
+    std = std = (0.23318603, 0.24300033, 0.24567522)
+    Dataset = getattr(import_module("dataset"), args.dataset)
+    dataset = Dataset(data_df, mean=mean, std=std)
+    train_set = Dataset(train_df, mean=mean, std=std)
+    valid_set = Dataset(valid_df, mean=mean, std=std)
     num_classes = dataset.num_classes
 
     Transform = getattr(import_module("transform"), args.transform)
@@ -41,7 +51,18 @@ def train(helper):
     )
     dataset.set_transform(transform)
 
-    train_set, val_set = dataset.split_dataset(val_size=0.2)
+    """
+    Please fill the code
+
+    transform_train = Transform([])
+    transform_valid = Transform([])
+
+    train_set.set_transform(transform_train)
+    valid_set.set_transform(transform_valid)
+    """
+
+    train_set.set_transform(transform)
+    valid_set.set_transform(transform)
 
     train_loader = DataLoader(
         train_set,
@@ -53,7 +74,7 @@ def train(helper):
     )
 
     val_loader = DataLoader(
-        val_set,
+        valid_set,
         batch_size=args.val_batch_size,
         num_workers=multiprocessing.cpu_count() // 2,
         shuffle=False,
@@ -237,7 +258,6 @@ if __name__ == '__main__':
     parser.add_argument('--dump', type=bool, default=False,
                         help="choose dump or not to save model")
     args = parser.parse_args()
-    print(args)
 
     helper = settings.SettingsHelper(
         args=args,

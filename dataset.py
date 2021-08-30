@@ -4,9 +4,11 @@ from pathlib import Path
 
 # Other Libs
 import pandas as pd
+import numpy as np
 import torch
 from torch.utils.data import Dataset
 from PIL import Image
+from tqdm import tqdm
 
 
 class TrainInfo():
@@ -26,7 +28,7 @@ class TrainInfo():
         paths_post = paths.str.split('/images').str[1]
         self.data['FullPath'] = paths_pre.str.cat(paths_post)
 
-    def split_dataset(self, crit_col='path', val_size=0.2, shuffle=True, random_state=32):
+    def split_dataset(self, val_size=0.2, crit_col='path', shuffle=True, random_state=32):
         if random_state:
             random.seed(random_state)
 
@@ -90,6 +92,7 @@ class MaskBaseDataset(Dataset):
     def setup(self):
         self.img_paths = list(self.data_info[self.path_col])
         self.labels = list(self.data_info[self.path_label])
+        self.num_classes = len(set(self.labels))
 
     def calc_statistics(self):
         has_statistics = self.mean is not None and self.std is not None
@@ -118,14 +121,14 @@ class MaskBaseDataset(Dataset):
         return image_transform, label
 
     def __len__(self):
-        return len(self.image_paths)
+        return len(self.img_paths)
 
     def read_image(self, index):
-        image_path = self.image_paths[index]
-        return Image.open(image_path)
+        img_path = self.img_paths[index]
+        return Image.open(img_path)
 
     def get_label(self, index):
-        return self.mask_labels[index].value
+        return self.labels[index]
 
     @staticmethod
     def denormalize_image(image, mean, std):
