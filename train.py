@@ -19,12 +19,9 @@ from loss import get_criterion
 import settings
 import logger
 
-<<<<<<< HEAD
 import wandb
-=======
 from dataset import MaskBaseDataset, TrainInfo
 
->>>>>>> 061fb185f92b77eab64eb50daf765e228180a736
 
 def train(helper):
     
