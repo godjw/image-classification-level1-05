@@ -2,3 +2,7 @@
 __pycache__
 model/
 .pyc
+train/
+eval/
+*.gz
+._train
