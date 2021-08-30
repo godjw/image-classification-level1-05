@@ -78,7 +78,6 @@ class TrainInfo():
 
 
 class MaskBaseDataset(Dataset):
-
     def __init__(self, data_info, mean=None, std=None, train_dir=None, path_col='FullPath', label_col='Class'):
         # Data Info
         self.data_info = data_info
