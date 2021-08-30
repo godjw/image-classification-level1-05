@@ -27,9 +27,9 @@ def train(helper):
 
     Dataset = getattr(import_module("dataset"), args.dataset)
     dataset = Dataset(
-        # data_dir=args.data_dir,
-        # mean=(0.56019358, 0.52410121, 0.501457),
-        # std=(0.23318603, 0.24300033, 0.24567522)
+        data_dir=args.data_dir,
+        mean=(0.56019358, 0.52410121, 0.501457),
+        std=(0.23318603, 0.24300033, 0.24567522)
     )
     num_classes = dataset.num_classes
 
@@ -202,7 +202,7 @@ if __name__ == '__main__':
                         help='random seed (default: 42)')
     parser.add_argument('--epochs', type=int, default=5,
                         help='number of epochs to train (default: 5)')
-    parser.add_argument('--dataset', type=str, default='MaskClassifierDataset',
+    parser.add_argument('--dataset', type=str, default='MaskBaseDataset',
                         help='dataset transform type (default: MaskBaseDataset)')
     parser.add_argument('--transform', type=str, default='BaseTransform',
                         help='data transform type (default: BaseTransform)')
