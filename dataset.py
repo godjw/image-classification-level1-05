@@ -5,11 +5,11 @@ from pathlib import Path
 # Other Libs
 import numpy as np
 import pandas as pd
-import numpy as np
-from tqdm import tqdm
+
 import torch
 from torch.utils.data import Dataset
 from PIL import Image
+from tqdm import tqdm
 
 from transform import BaseTransform
 
