@@ -26,9 +26,9 @@ def train(helper):
 
     Dataset = getattr(import_module("dataset"), args.dataset)
     dataset = Dataset(
-        data_dir=args.data_dir,
-        mean=(0.56019358, 0.52410121, 0.501457),
-        std=(0.23318603, 0.24300033, 0.24567522)
+        # data_dir=args.data_dir,
+        # mean=(0.56019358, 0.52410121, 0.501457),
+        # std=(0.23318603, 0.24300033, 0.24567522)
     )
     num_classes = dataset.num_classes
     
