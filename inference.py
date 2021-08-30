@@ -9,10 +9,7 @@ from torch.utils.data import DataLoader
 from dataset import MaskBaseDataset, TestDataset
 
 
-def load_model(model_dir, num_classes, device):
-    model_cls = getattr(import_module("model"), args.model)
-    model = model_cls(num_classes=num_classes)
-
+def load_model(model_dir, device):
     model_path = os.path.join(model_dir, args.model_name)
     model = torch.load(model_path, map_location=device)
 
@@ -24,8 +21,7 @@ def inference(data_dir, model_dir, output_dir):
     is_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if is_cuda else "cpu")
 
-    num_classes = MaskBaseDataset.num_classes
-    model = load_model(model_dir, num_classes, device).to(device)
+    model = load_model(model_dir, device).to(device)
     model.eval()
 
     img_root = os.path.join(data_dir, 'images')
@@ -62,8 +58,8 @@ if __name__ == '__main__':
 
     # Container environment
     parser.add_argument('--data_dir', type=str, default=os.environ.get('SM_CHANNEL_EVAL', '/opt/ml/input/data/eval'))
-    parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_CHANNEL_MODEL', './model/exp'))
-    parser.add_argument('--exp_num', type=str, default='')
+    parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_CHANNEL_MODEL', './model'))
+    parser.add_argument('--name', type=str, default='exp')
     parser.add_argument('--output_dir', type=str, default=os.environ.get('SM_OUTPUT_DATA_DIR', './output'))
     parser.add_argument('--model_name', type=str, default='best.pt')
 
@@ -74,7 +70,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
-    inference(data_dir=args.data_dir, model_dir=args.model_dir+args.exp_num, output_dir=args.output_dir)
-    model_dir=args.model_dir+args.exp_num
-    print(model_dir)
-    print(args.model_name)
+    inference(data_dir=args.data_dir, model_dir=os.path.join(args.model_dir, args.name), output_dir=args.output_dir)
