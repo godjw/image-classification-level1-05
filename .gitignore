@@ -2,7 +2,11 @@
 __pycache__
 model/
 .pyc
+<<<<<<< HEAD
 train/
 eval/
 *.gz
 ._train
+=======
+output/
+>>>>>>> 85176d6a3b0bed3037dca777a63966cfd1125b46
