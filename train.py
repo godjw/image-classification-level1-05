@@ -19,7 +19,12 @@ from loss import get_criterion
 import settings
 import logger
 
+<<<<<<< HEAD
 import wandb
+=======
+from dataset import MaskBaseDataset, TrainInfo
+
+>>>>>>> 061fb185f92b77eab64eb50daf765e228180a736
 
 def train(helper):
     
@@ -48,9 +53,12 @@ def train(helper):
     Transform = getattr(import_module("transform"), args.transform)
     transform = Transform(
         resize=args.resize,
-        mean=dataset.mean,
-        std=dataset.std,
+        mean=train_set.mean,
+        std=train_set.std,
     )
+    train_set.set_transform(transform)
+    valid_set.set_transform(transform)
+
     dataset.set_transform(transform)
 
     """
@@ -189,8 +197,8 @@ def train(helper):
                 if figure is None:
                     imgs = torch.clone(inputs).detach(
                     ).cpu().permute(0, 2, 3, 1).numpy()
-                    imgs = Dataset.denormalize_image(
-                        imgs, dataset.mean, dataset.std)
+                    imgs = train_set.denormalize_image(
+                        imgs, train_set.mean, train_set.std)
                     figure = logger.grid_image(
                         imgs=imgs, labels=labels, preds=preds,
                         n=16, shuffle=args.dataset != "MaskSplitByProfileDataset"

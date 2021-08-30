@@ -3,6 +3,7 @@ import random
 from pathlib import Path
 
 # Other Libs
+import numpy as np
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -10,6 +11,8 @@ import torch
 from torch.utils.data import Dataset
 from PIL import Image
 from tqdm import tqdm
+
+from transform import BaseTransform
 
 
 class TrainInfo():
@@ -87,6 +90,7 @@ class MaskBaseDataset(Dataset):
         self.mean = mean
         self.std = std
         self.transform = None
+        self.num_classes = 18
 
         self.setup()
         self.calc_statistics()

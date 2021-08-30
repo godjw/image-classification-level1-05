@@ -49,11 +49,16 @@ class ResNet18Pretrained(nn.Module):
         stdv = 1. / math.sqrt(self.net.fc.weight.size(1))
         self.net.fc.bias.data.uniform_(-stdv, stdv)
         for layer in freeze:
+<<<<<<< HEAD
             print("="*100)
             print('tyepfreeze', type(freeze))
             print('layer:', layer)
             print("="*100)
             getattr(self.net, layer).requires_grad_(False)
 
+=======
+            getattr(self.net, layer).requires_grad_(False)
+        
+>>>>>>> 061fb185f92b77eab64eb50daf765e228180a736
     def forward(self, x):
         return self.net(x)
