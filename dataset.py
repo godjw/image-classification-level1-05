@@ -4,6 +4,8 @@ from pathlib import Path
 
 # Other Libs
 import pandas as pd
+import numpy as np
+from tqdm import tqdm
 import torch
 from torch.utils.data import Dataset
 from PIL import Image
