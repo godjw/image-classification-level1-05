@@ -62,7 +62,7 @@ def train(helper):
     )
 
     Model = getattr(import_module("model"), args.model)
-    model = Model(num_classes=num_classes).to(device)
+    model = Model(num_classes=num_classes, freeze=args.freeze).to(device)
     model = torch.nn.DataParallel(model)
 
     criterion = get_criterion(args.criterion)
@@ -74,9 +74,9 @@ def train(helper):
     )
     scheduler = StepLR(optimizer, args.lr_decay_step, gamma=0.5)
 
-    save_dir = helper.get_save_dir(dump=False)
+    save_dir = helper.get_save_dir(dump=args.dump)
     writer = SummaryWriter(log_dir=save_dir)
-    with open(os.path.join(save_dir, 'config.json'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(save_dir, f'{args.model_name}.json'), 'w', encoding='utf-8') as f:
         json.dump(vars(args), f, ensure_ascii=False, indent=4)
 
     best_val_acc = 0
@@ -147,9 +147,10 @@ def train(helper):
             best_val_loss = min(best_val_loss, val_loss)
             if val_acc > best_val_acc:
                 print(f"New best model for val accuracy : {val_acc:3.2f}%! saving the best model..")
-                torch.save(model.module.state_dict(), os.path.join(save_dir, 'best.pt'))
+                torch.save(model, os.path.join(save_dir, f'{args.model_name}.pt'))
                 best_val_acc = val_acc
-            torch.save(model.module.state_dict(), os.path.join(save_dir, 'last.pt'))
+
+            # torch.save(model.module.state_dict(), os.path.join(save_dir, 'last.pt'))
             print(
                 f'Validation:\n'
                 f'accuracy: {val_acc:>3.2%}\tloss: {val_loss:>4.2f}\n'
@@ -174,15 +175,18 @@ if __name__ == '__main__':
     parser.add_argument("--resize", nargs="+", type=list, default=(128, 96), help='resize size for image when training')
     parser.add_argument('--batch_size', type=int, default=64, help='input batch size for training (default: 64)')
     parser.add_argument('--val_batch_size', type=int, default=1000, help='input batch size for validation (default: 1000)')
-    parser.add_argument('--model', type=str, default='ResNet18PretrainedL12Frozen', help='model type (default: ResNet18PretrainedL12Frozen)')
+    parser.add_argument('--model', type=str, default='ResNet18Pretrained', help='model type (default: ResNet18Pretrained)')
     parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer type (default: Adam)')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate (default: 1e-3)')
     parser.add_argument('--val_ratio', type=float, default=0.2, help='ratio for validaton (default: 0.2)')
     parser.add_argument('--criterion', type=str, default='cross_entropy', help='criterion type (default: cross_entropy)')
     parser.add_argument('--lr_decay_step', type=int, default=20, help='learning rate scheduler deacy step (default: 20)')
     parser.add_argument('--log_interval', type=int, default=20, help='how many batches to wait before logging training status')
-    parser.add_argument('--name', default='exp', help='model to save at {SM_MODEL_DIR}/{name}')
+    parser.add_argument('--name', type=str, default='exp', help='model to save at {SM_MODEL_DIR}/{name}')
+    parser.add_argument('--mode', type=str, default='all', help='select mask, age, gender, all')
+    parser.add_argument('--model_name', type=str, default='best', help='custom model name')
     parser.add_argument('--freeze', nargs='+', default =[], help='layers to freeze (default: [])')
+    parser.add_argument('--dump', type=bool, default=False, help="choose dump or not to save model")
     args = parser.parse_args()
     print(args)
 
