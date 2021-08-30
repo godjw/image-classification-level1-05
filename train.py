@@ -18,6 +18,7 @@ from loss import get_criterion
 import settings
 import logger
 
+
 def train(helper):
     args = helper.args
     device = helper.device
@@ -105,7 +106,7 @@ def train(helper):
             matches += (preds == labels).float().mean().item()
             accumulated_f1 += f1_score(labels.cpu().numpy(), preds.cpu().numpy(), average='macro')
             iter_count += 1
-            
+
             if (idx + 1) % args.log_interval == 0:
                 train_loss = loss_value / args.log_interval
                 train_acc = matches / args.log_interval
@@ -118,7 +119,7 @@ def train(helper):
                 )
                 writer.add_scalar("Train/loss", train_loss, epoch * len(train_loader) + idx)
                 writer.add_scalar("Train/accuracy", train_acc, epoch * len(train_loader) + idx)
-                writer.add_scalar("Train/f1", train_f1, epoch * len(train_loader) + idx)   
+                writer.add_scalar("Train/f1", train_f1, epoch * len(train_loader) + idx)
 
                 loss_value = 0
                 matches = 0
@@ -153,7 +154,7 @@ def train(helper):
 
             val_loss = np.sum(val_loss_items) / len(val_loader)
             val_acc = np.sum(val_acc_items) / len(val_set)
-            val_f1 = np.average(val_f1_items) 
+            val_f1 = np.average(val_f1_items)
             best_val_loss = min(best_val_loss, val_loss)
             if val_acc > best_val_acc:
                 print(f"New best model for val accuracy : {val_acc:3.2%}! saving the best model..")
@@ -189,7 +190,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--seed', type=int, default=42, help='random seed (default: 42)')
     parser.add_argument('--epochs', type=int, default=5, help='number of epochs to train (default: 5)')
-    parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset transform type (default: MaskBaseDataset)')
+    parser.add_argument('--dataset', type=str, default='MaskClassifierDataset', help='dataset transform type (default: MaskBaseDataset)')
     parser.add_argument('--transform', type=str, default='BaseTransform', help='data transform type (default: BaseTransform)')
     parser.add_argument("--resize", nargs="+", type=list, default=(128, 96), help='resize size for image when training')
     parser.add_argument('--batch_size', type=int, default=64, help='input batch size for training (default: 64)')
@@ -204,7 +205,7 @@ if __name__ == '__main__':
     parser.add_argument('--name', type=str, default='exp', help='model to save at {SM_MODEL_DIR}/{name}')
     parser.add_argument('--mode', type=str, default='all', help='select mask, age, gender, all')
     parser.add_argument('--model_name', type=str, default='best', help='custom model name')
-    parser.add_argument('--freeze', nargs='+', default =[], help='layers to freeze (default: [])')
+    parser.add_argument('--freeze', nargs='+', default=[], help='layers to freeze (default: [])')
     parser.add_argument('--dump', type=bool, default=False, help="choose dump or not to save model")
     args = parser.parse_args()
     print(args)
