@@ -7,7 +7,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from dataset import MaskBaseDataset, TestDataset
-
+from tqdm import tqdm
 
 def load_model(model_dir, device, model_name):
     model_path = os.path.join(model_dir, model_name)
@@ -21,7 +21,7 @@ def inference(data_dir, model_dir, output_dir):
     is_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if is_cuda else "cpu")
 
-    model = load_model(model_dir, device, args.name).to(device)
+    model = load_model(model_dir, device, args.model_name).to(device)
     model.eval()
 
     img_root = os.path.join(data_dir, 'images')
@@ -42,7 +42,7 @@ def inference(data_dir, model_dir, output_dir):
     print("Calculating inference results..")
     preds = []
     with torch.no_grad():
-        for images in loader:
+        for images in tqdm(loader):
             images = images.to(device)
             pred = model(images)
             pred = pred.argmax(dim=-1)
@@ -57,9 +57,9 @@ def inference_with_ansemble(data_dir, model_dir, output_dir):
     is_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if is_cuda else "cpu")
 
-    age_model = load_model(model_dir, device, 'age.pt').to(device)
-    gender_model = load_model(model_dir, device, 'gender.pt').to(device)
-    mask_model  = load_model(model_dir, device, 'mask.pt').to(device)
+    age_model = load_model(model_dir, device, 'agef1.pt').to(device)
+    gender_model = load_model(model_dir, device, 'genderf1.pt').to(device)
+    mask_model  = load_model(model_dir, device, 'maskf1.pt').to(device)
     age_model.eval()
     gender_model.eval()
     mask_model.eval()
@@ -73,7 +73,7 @@ def inference_with_ansemble(data_dir, model_dir, output_dir):
     loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=args.batch_size,
-        num_workers=8,
+        num_workers=4,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=False,
@@ -82,9 +82,9 @@ def inference_with_ansemble(data_dir, model_dir, output_dir):
     print("Calculating inference results..")
     preds = []
     with torch.no_grad():
-        for images in loader:
+        for images in tqdm(loader):
+
             images = images.to(device)
-        
             pred = mask_model(images)
             pred_mask = pred.argmax(dim=-1)
             
@@ -98,7 +98,7 @@ def inference_with_ansemble(data_dir, model_dir, output_dir):
             preds.extend(result.cpu().numpy())
 
     info['ans'] = preds
-    info.to_csv(os.path.join(output_dir, f'output.csv'), index=False)
+    info.to_csv(os.path.join(output_dir, f'{args.name}_output.csv'), index=False)
     print(f'Inference Done!')
 
 if __name__ == '__main__':

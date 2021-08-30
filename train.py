@@ -40,22 +40,18 @@ def train(helper):
     mean = (0.56019358, 0.52410121, 0.501457)
     std = std = (0.23318603, 0.24300033, 0.24567522)
     Dataset = getattr(import_module("dataset"), args.dataset)
-    dataset = Dataset(data_df, mean=mean, std=std)
-    train_set = Dataset(train_df, mean=mean, std=std)
-    valid_set = Dataset(valid_df, mean=mean, std=std)
+
+    dataset = Dataset(data_df, mean=mean, std=std, label_col='Class' + args.mode.capitalize())
+    train_set = Dataset(train_df, mean=mean, std=std, label_col='Class' + args.mode.capitalize())
+    valid_set = Dataset(valid_df, mean=mean, std=std, label_col='Class' + args.mode.capitalize())
     num_classes = dataset.num_classes
-    
     Transform = getattr(import_module("transform"), args.transform)
     transform = Transform(
         resize=args.resize,
         mean=train_set.mean,
         std=train_set.std,
     )
-    train_set.set_transform(transform)
-    valid_set.set_transform(transform)
-
     dataset.set_transform(transform)
-
     """
     Please fill the code
 
@@ -90,7 +86,6 @@ def train(helper):
     Model = getattr(import_module("model"), args.model)
     model = Model(num_classes=num_classes, freeze=args.freeze).to(device)
     model = torch.nn.DataParallel(model)
-
     criterion = get_criterion(args.criterion)
     Optimizer = getattr(import_module('torch.optim'), args.optimizer)
     optimizer = Optimizer(
@@ -102,7 +97,7 @@ def train(helper):
 
     save_dir = helper.get_save_dir(dump=args.dump)
     writer = SummaryWriter(log_dir=save_dir)
-    with open(os.path.join(save_dir, f'{args.model_name}.json'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(save_dir, f'{args.mode}.json'), 'w', encoding='utf-8') as f:
         json.dump(vars(args), f, ensure_ascii=False, indent=4)
 
     best_val_acc = 0
@@ -193,13 +188,17 @@ def train(helper):
             best_val_loss = min(best_val_loss, val_loss)
             if val_acc > best_val_acc:
                 print(f"New best model for val accuracy : {val_acc:3.2f}%! saving the best model..")
-                torch.save(model, os.path.join(
-                    save_dir, f'{args.model_name}.pt'))
+                if args.mode:
+                    torch.save(model, os.path.join(save_dir, f'{args.mode}.pt'))
+                else:
+                    torch.save(model, os.path.join(save_dir, f'{args.model_name}.pt'))
                 best_val_acc = val_acc
             if val_f1 > best_f1:
                 print(f"New best model for f1 : {val_f1:3.2f}%! saving the best model..")
-                torch.save(model, os.path.join(
-                    save_dir, f'{args.model_name}f1.pt'))
+                if args.mode:
+                    torch.save(model, os.path.join(save_dir, f'{args.mode}f1.pt'))
+                else:
+                    torch.save(model, os.path.join(save_dir, f'{args.model_name}f1.pt'))
                 best_f1 = val_f1
             # torch.save(model.module.state_dict(), os.path.join(save_dir, 'last.pt'))
             print(
@@ -253,8 +252,8 @@ if __name__ == '__main__':
                         help='how many batches to wait before logging training status')
     parser.add_argument('--name', type=str, default='exp',
                         help='model to save at {SM_MODEL_DIR}/{name}')
-    parser.add_argument('--mode', type=str, default='all',
-                        help='select mask, age, gender, all')
+    parser.add_argument('--mode', type=str, default='',
+                        help='select Mask, Age, Gender')
     parser.add_argument('--model_name', type=str,
                         default='best', help='custom model name')
     parser.add_argument('--freeze', nargs='+', default=[],
