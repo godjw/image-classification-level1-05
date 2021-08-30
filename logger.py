@@ -26,9 +26,7 @@ def grid_image(imgs, labels, preds, n=16, shuffle=False):
         gt = labels[choice].item()
         pred = preds[choice].item()
         image = imgs[choice]
-        print(gt)
-        print(pred)
-        print('\n\n\n\n')
+
         # title = f"gt: {gt}, pred: {pred}"
         gt_decoded_labels = MaskBaseDataset.decode_multi_class(gt)
         pred_decoded_labels = MaskBaseDataset.decode_multi_class(pred)
