@@ -1,12 +1,20 @@
 {
     "init" : {
-              "project" : "project",
+              "project" : "JunshickProject",
               "entity" : "aim5",
-              "name" : "name"
+              "name" : "resnet_freeze"
              },
  
     "watch": {
-              "log": "all",
+              "log": "all", 
               "log_freq": 10  
              }
 }
+
+
+
+
+
+
+
+

@@ -77,14 +77,15 @@ def train(helper):
     scheduler = StepLR(optimizer, args.lr_decay_step, gamma=0.5)
 
     save_dir = helper.get_save_dir(dump=args.dump)
+
     writer = SummaryWriter(log_dir=save_dir)
     with open(os.path.join(save_dir, f'{args.model_name}.json'), 'w', encoding='utf-8') as f:
         json.dump(vars(args), f, ensure_ascii=False, indent=4)
 
     #get_wandb
     #wandb watch -- tell wandb to watch what the model gets up to
-    log, log_freq = wandb_file["watch"].values()
-    wandb.watch(model, criterion, log=log, log_freq=log_freq)
+    #log, log_freq = wandb_file["watch"].values()
+    #wandb.watch(model, criterion, log=log, log_freq=log_freq)
 
     best_val_acc = 0
     best_val_loss = np.inf
@@ -109,6 +110,7 @@ def train(helper):
 
             loss_value += loss.item()
             matches += (preds == labels).float().mean().item()
+
             accumulated_f1 += f1_score(labels.cpu().numpy(), preds.cpu().numpy(), average='macro')
             iter_count += 1
             
@@ -127,10 +129,11 @@ def train(helper):
                 writer.add_scalar("Train/accuracy", train_acc, epoch * len(train_loader) + idx)
                 writer.add_scalar("Train/f1", train_f1, epoch * len(train_loader) + idx)   
 
-                wandb.log({"Train/epoch": epoch,
-                        "Train/loss": train_loss,
-                        "Train/accuracy": train_acc})
-
+                
+                wandb.log({"Train/loss": train_loss,
+                          "Train/accuracy": train_acc,
+                          "Train/f1": train_f1})
+                
                 loss_value = 0
                 matches = 0
 
@@ -170,6 +173,7 @@ def train(helper):
             val_acc = np.sum(val_acc_items) / len(val_set)
             val_f1 = np.average(val_f1_items) 
             best_val_loss = min(best_val_loss, val_loss)
+            
             if val_acc > best_val_acc:
                 print(f"New best model for val accuracy : {val_acc:3.2f}%! saving the best model..")
                 torch.save(model, os.path.join(save_dir, f'{args.model_name}.pt'))
@@ -178,6 +182,7 @@ def train(helper):
                 print(f"New best model for f1 : {val_f1:3.2f}%! saving the best model..")
                 torch.save(model, os.path.join(save_dir, f'{args.model_name}f1.pt'))
                 best_f1 = val_f1
+            
             # torch.save(model.module.state_dict(), os.path.join(save_dir, 'last.pt'))
             print(
                 f'Validation:\n'
@@ -189,9 +194,10 @@ def train(helper):
             writer.add_scalar("Val/f1", val_f1, epoch)
             writer.add_figure("results", figure, epoch)
 
-            wandb.log({"Val/epoch": epoch,
-                    "Val/loss": val_loss,
-                    "Val/accuracy": val_acc})
+            wandb.log({"Val/loss": val_loss,
+                       "Val/accuracy": val_acc,
+                       "Val/f1": val_f1})
+
         model.train()
 
 
@@ -226,6 +232,7 @@ if __name__ == '__main__':
     project, entity, name = wandb_file["init"].values()
     wandb.init(project=project, entity=entity, name=name, config=args) #wandb 초기화
     print(args)
+
 
     helper = settings.SettingsHelper(
         args=args,
