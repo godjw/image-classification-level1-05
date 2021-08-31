@@ -22,7 +22,7 @@ class TrainInfo():
 
         # Update directory
         self.data_dir = Path(data_dir)
-        self.update_data_dir()
+        #self.update_data_dir()
 
     def update_data_dir(self):
         paths = self.data['FullPath']
