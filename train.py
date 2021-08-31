@@ -19,6 +19,7 @@ from loss import get_criterion
 import settings
 import logger
 
+import wandb
 
 def train(helper):
     args = helper.args
@@ -27,8 +28,9 @@ def train(helper):
 
     DataInfo = getattr(import_module("dataset"), "TrainInfo")
     data_info = DataInfo(
-        file_dir=None,
-        data_dir=args.data_dir
+        file_dir=args.file_dir,
+        data_dir=args.data_dir,
+        new_dataset=args.new_dataset
     )
     train_df, valid_df, dist_df = data_info.split_dataset(args.val_ratio)
 
@@ -52,7 +54,6 @@ def train(helper):
     )
     train_set.set_transform(train_transform)
     valid_set.set_transform(val_transform)
-
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,
@@ -130,7 +131,9 @@ def train(helper):
                 writer.add_scalar("Train/loss", train_loss, epoch * len(train_loader) + idx)
                 writer.add_scalar("Train/accuracy", train_acc, epoch * len(train_loader) + idx)
                 writer.add_scalar("Train/f1", train_f1, epoch * len(train_loader) + idx)
-
+                wandb.log({"Train/loss": train_loss,
+                           "Train/accuracy": train_acc,
+                           "Train/f1": train_f1 })
                 loss_value = 0
                 matches = 0
 
@@ -193,6 +196,10 @@ def train(helper):
             writer.add_scalar("Val/accuracy", val_acc, epoch)
             writer.add_scalar("Val/f1", val_f1, epoch)
             writer.add_figure("results", figure, epoch)
+
+            wandb.log({"Val/loss": val_loss,
+                       "Val/accuracy": val_acc,
+                       "Val/f1": val_f1 })
         model.train()
     logger.save_confusion_matrix(
         num_classes=valid_set.num_classes,
@@ -205,10 +212,10 @@ def train(helper):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-
     parser.add_argument('--data_dir', type=str, default=os.environ.get('SM_CHANNEL_TRAIN', '/opt/ml/input/data/train/images'))
     parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_MODEL_DIR', './model'))
-
+    parser.add_argument('--file_dir', type=str, default='')
+    parser.add_argument('--new_dataset', type=bool, default=False)
     parser.add_argument('--seed', type=int, default=42, help='random seed (default: 42)')
     parser.add_argument('--epochs', type=int, default=5, help='number of epochs to train (default: 5)')
     parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset transform type (default: MaskBaseDataset)')
@@ -234,4 +241,10 @@ if __name__ == '__main__':
         args=args,
         device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     )
+
+    wb_object = json.loads(open("wandb_config.json"))
+    project, entity, name = wb_object.values()
+    wandb.init(project=project, entity=entity, config=args)
+    print(args)
+
     train(helper=helper)
