@@ -15,14 +15,11 @@ from transform import BaseTransform
 
 
 class TrainInfo():
-    def __init__(self, file_dir=None, data_dir='/opt/ml/input/data/train/images'):
-        # Train info data
-        self.data = pd.read_csv(file_dir) if file_dir else pd.read_csv(
-            'processed_train.csv')
-
-        # Update directory  
+    def __init__(self, file_dir=None, data_dir='/opt/ml/input/data/train/images', new_dataset=False):
+        self.data = pd.read_csv(file_dir) if file_dir else pd.read_csv('processed_train.csv')
         self.data_dir = Path(data_dir)
-        self.update_data_dir()
+        if new_dataset == False:
+            self.update_data_dir()
 
     def update_data_dir(self):
         paths = self.data['FullPath']
@@ -39,14 +36,12 @@ class TrainInfo():
         _size = len(_idxs)
         _size_valid = int(_size * val_size)
 
-        # Split DataFrame
         valid_idxs = set(random.sample(_idxs, _size_valid))
         valid_df = self.data.loc[self.data[crit_col].isin(valid_idxs)]
 
         train_idxs = _idxs - valid_idxs
         train_df = self.data.loc[self.data[crit_col].isin(train_idxs)]
 
-        # Split Result
         split_result = dict(origin=self.data, train=train_df, valid=valid_df)
         split_result = self._split_result(split_result)
 
@@ -78,9 +73,7 @@ class TrainInfo():
 
 
 class MaskBaseDataset(Dataset):
-
-    def __init__(self, data_info, mean=None, std=None, train_dir=None, path_col='FullPath', label_col='Class'):
-        # Data Info
+    def __init__(self, data_info, mean=None, std=None, path_col='FullPath', label_col='Class'):
         self.data_info = data_info
         self.path_col = path_col
         self.path_label = label_col
@@ -89,7 +82,10 @@ class MaskBaseDataset(Dataset):
         self.std = std
         self.transform = None
         self.num_classes = 18
-
+        if label_col == "Class Mask" or "Class Age":
+            self.num_classes = 3
+        elif label_col == "Class Gender":
+            self.num_classes = 2
         self.setup()
         self.calc_statistics()
 
