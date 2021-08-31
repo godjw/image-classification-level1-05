@@ -50,6 +50,10 @@ class ResNet18Pretrained(nn.Module):
         self.net.fc.bias.data.uniform_(-stdv, stdv)
         for layer in freeze:
             getattr(self.net, layer).requires_grad_(False)
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 061fb185f92b77eab64eb50daf765e228180a736
     def forward(self, x):
         return self.net(x)

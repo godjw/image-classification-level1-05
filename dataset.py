@@ -1,108 +1,102 @@
-import os
+# System Libs.
 import random
-from collections import defaultdict
-from enum import Enum
-from typing import Tuple, List
+from pathlib import Path
 
+# Other Libs
 import numpy as np
+import pandas as pd
+import numpy as np
+import torch
+from torch.utils.data import Dataset
 from PIL import Image
-from torch.utils.data import Dataset, Subset, random_split
-from torchvision import transforms as T
 from tqdm import tqdm
 
-from transform import *
-
-class MaskLabels(Enum):
-    MASK = 0
-    INCORRECT = 1
-    NORMAL = 2
+from transform import BaseTransform
 
 
-class GenderLabels(int, Enum):
-    MALE = 0
-    FEMALE = 1
+class TrainInfo():
+    def __init__(self, file_dir=None, data_dir='/opt/ml/input/data/train/images'):
+        # Train info data
+        self.data = pd.read_csv(file_dir) if file_dir else pd.read_csv(
+            'processed_train.csv')
 
-    @classmethod
-    def from_str(cls, value: str) -> int:
-        value = value.lower()
-        if value == "male":
-            return cls.MALE
-        elif value == "female":
-            return cls.FEMALE
-        else:
-            raise ValueError(f"Gender value should be either 'male' or 'female', {value}")
+        # Update directory
+        self.data_dir = Path(data_dir)
+        self.update_data_dir()
 
+    def update_data_dir(self):
+        paths = self.data['FullPath']
+        paths_pre = paths.copy()
+        paths_pre.loc[:] = str(self.data_dir)
+        paths_post = paths.str.split('/images').str[1]
+        self.data['FullPath'] = paths_pre.str.cat(paths_post)
 
-class AgeLabels(int, Enum):
-    YOUNG = 0
-    MID = 1
-    OLD = 2
+    def split_dataset(self, val_size=0.2, crit_col='path', shuffle=True, random_state=32):
+        if random_state:
+            random.seed(random_state)
 
-    @classmethod
-    def from_number(cls, value: str) -> int:
-        try:
-            value = int(value)
-        except Exception:
-            raise ValueError(f"Age value should be numeric, {value}")
+        _idxs = set(self.data[crit_col].unique())
+        _size = len(_idxs)
+        _size_valid = int(_size * val_size)
 
-        if value < 30:
-            return cls.YOUNG
-        elif value < 60:
-            return cls.MID
-        else:
-            return cls.OLD
+        # Split DataFrame
+        valid_idxs = set(random.sample(_idxs, _size_valid))
+        valid_df = self.data.loc[self.data[crit_col].isin(valid_idxs)]
+
+        train_idxs = _idxs - valid_idxs
+        train_df = self.data.loc[self.data[crit_col].isin(train_idxs)]
+
+        # Split Result
+        split_result = dict(origin=self.data, train=train_df, valid=valid_df)
+        split_result = self._split_result(split_result)
+
+        return train_df, valid_df, split_result
+
+    def _split_result(self, df_dict, col_list=['Mask', 'Age', 'Gender']):
+        dist_list = []
+        for name, df in df_dict.items():
+            dist_df_list = []
+            for col in col_list:
+                # Dist. info
+                dist_count = pd.DataFrame(df[col].value_counts())
+                dist_count.columns = ['Count']
+                dist_ratio = pd.DataFrame(df[col].value_counts(True))
+                dist_ratio.columns = ['Ratio']
+
+                # Construct & append dataframe
+                _dist_df = pd.concat([dist_count, dist_ratio], axis=1)
+                _dist_df.index = pd.MultiIndex.from_product(
+                    [[col], _dist_df.index])
+                dist_df_list.append(_dist_df)
+            dist_df = pd.concat(dist_df_list, axis=0)
+            dist_df.columns = pd.MultiIndex.from_product(
+                [[name], dist_df.columns])
+            dist_list.append(dist_df)
+        dist_info = pd.concat(dist_list, axis=1)
+
+        return dist_info
 
 
 class MaskBaseDataset(Dataset):
-    num_classes = 3 * 2 * 3
 
-    _file_names = {
-        "mask1": MaskLabels.MASK,
-        "mask2": MaskLabels.MASK,
-        "mask3": MaskLabels.MASK,
-        "mask4": MaskLabels.MASK,
-        "mask5": MaskLabels.MASK,
-        "incorrect_mask": MaskLabels.INCORRECT,
-        "normal": MaskLabels.NORMAL
-    }
+    def __init__(self, data_info, mean=None, std=None, train_dir=None, path_col='FullPath', label_col='Class'):
+        # Data Info
+        self.data_info = data_info
+        self.path_col = path_col
+        self.path_label = label_col
 
-    image_paths = []
-    mask_labels = []
-    gender_labels = []
-    age_labels = []
-
-    def __init__(self, data_dir, mean=None, std=None):
-        self.data_dir = data_dir
         self.mean = mean
         self.std = std
-
         self.transform = None
+        self.num_classes = 18
+
         self.setup()
         self.calc_statistics()
 
     def setup(self):
-        profiles = os.listdir(self.data_dir)
-        for profile in profiles:
-            if profile.startswith("."):
-                continue
-
-            img_folder = os.path.join(self.data_dir, profile)
-            for file_name in os.listdir(img_folder):
-                _file_name, ext = os.path.splitext(file_name)
-                if _file_name not in self._file_names:  # "." 로 시작하는 파일 및 invalid 한 파일들은 무시합니다
-                    continue
-
-                img_path = os.path.join(self.data_dir, profile, file_name)  # (resized_data, 000004_male_Asian_54, mask1.jpg)
-                mask_label = self._file_names[_file_name]
-
-                id, gender, race, age = profile.split("_")
-                gender_label = GenderLabels.from_str(gender)
-                age_label = AgeLabels.from_number(age)
-
-                self.image_paths.append(img_path)
-                self.mask_labels.append(mask_label)
-                self.gender_labels.append(gender_label)
-                self.age_labels.append(age_label)
+        self.img_paths = list(self.data_info[self.path_col])
+        self.labels = list(self.data_info[self.path_label])
+        self.num_classes = len(set(self.labels))
 
     def calc_statistics(self):
         has_statistics = self.mean is not None and self.std is not None
@@ -110,8 +104,8 @@ class MaskBaseDataset(Dataset):
             print("Calculating statistics... This might take a while")
             sums = []
             squared = []
-            for image_path in tqdm(self.image_paths):
-                image = np.array(Image.open(image_path)).astype(np.int32)
+            for img_path in tqdm(self.img_paths):
+                image = np.array(Image.open(img_path)).astype(np.int32)
                 sums.append(image.mean(axis=(0, 1)))
                 squared.append((image ** 2).mean(axis=(0, 1)))
 
@@ -125,33 +119,20 @@ class MaskBaseDataset(Dataset):
         assert self.transform is not None, ".set_tranform 메소드를 이용하여 transform 을 주입해주세요"
 
         image = self.read_image(index)
-        mask_label = self.get_mask_label(index)
-        gender_label = self.get_gender_label(index)
-        age_label = self.get_age_label(index)
-        multi_class_label = self.encode_multi_class(mask_label, gender_label, age_label)
+        label = self.get_label(index)
 
         image_transform = self.transform(image)
-        return image_transform, multi_class_label
+        return image_transform, label
 
     def __len__(self):
-        return len(self.image_paths)
-
-    def get_mask_label(self, index):
-        return self.mask_labels[index].value
-
-    def get_gender_label(self, index):
-        return self.gender_labels[index].value
-
-    def get_age_label(self, index):
-        return self.age_labels[index].value
+        return len(self.img_paths)
 
     def read_image(self, index):
-        image_path = self.image_paths[index]
-        return Image.open(image_path)
+        img_path = self.img_paths[index]
+        return Image.open(img_path)
 
-    @staticmethod
-    def encode_multi_class(mask_label, gender_label, age_label) -> int:
-        return mask_label * 6 + gender_label * 3 + age_label
+    def get_label(self, index):
+        return self.labels[index]
 
     @staticmethod
     def decode_multi_class(multi_class_label):
@@ -168,63 +149,6 @@ class MaskBaseDataset(Dataset):
         _img *= 255.0
         _img = np.clip(_img, 0, 255).astype(np.uint8)
         return _img
-
-    def split_dataset(self, val_size) -> Tuple[Subset, Subset]:
-        n_val = int(len(self) * val_size)
-        n_train = len(self) - n_val
-        train_set, val_set = random_split(self, [n_train, n_val])
-        return (train_set, val_set)
-
-
-class MaskSplitByProfileDataset(MaskBaseDataset):
-    def __init__(self, data_dir, mean=None, std=None):
-        super().__init__(data_dir, mean, std)
-        self.indices = defaultdict(list)
-
-    @staticmethod
-    def _split_profile(profiles, val_ratio):
-        length = len(profiles)
-        n_val = int(length * val_ratio)
-
-        val_indices = set(random.choices(range(length), k=n_val))
-        train_indices = set(range(length)) - val_indices
-        return {
-            "train": train_indices,
-            "val": val_indices
-        }
-
-    def setup(self):
-        profiles = os.listdir(self.data_dir)
-        profiles = [profile for profile in profiles if not profile.startswith(".")]
-        split_profiles = self._split_profile(profiles, self.val_ratio)
-
-        cnt = 0
-        for phase, indices in split_profiles.items():
-            for _idx in indices:
-                profile = profiles[_idx]
-                img_folder = os.path.join(self.data_dir, profile)
-                for file_name in os.listdir(img_folder):
-                    _file_name, ext = os.path.splitext(file_name)
-                    if _file_name not in self._file_names:  # "." 로 시작하는 파일 및 invalid 한 파일들은 무시합니다
-                        continue
-
-                    img_path = os.path.join(self.data_dir, profile, file_name)  # (resized_data, 000004_male_Asian_54, mask1.jpg)
-                    mask_label = self._file_names[_file_name]
-
-                    id, gender, race, age = profile.split("_")
-                    gender_label = GenderLabels.from_str(gender)
-                    age_label = AgeLabels.from_number(age)
-
-                    self.image_paths.append(img_path)
-                    self.mask_labels.append(mask_label)
-                    self.gender_labels.append(gender_label)
-                    self.age_labels.append(age_label)
-
-                    self.indices[phase].append(cnt)
-                    cnt += 1
-
-    def split_dataset(self) -> List[Subset]:
-        return [Subset(self, indices) for phase, indices in self.indices.items()]
 
 
 class TestDataset(Dataset):
