@@ -83,7 +83,10 @@ class MaskBaseDataset(Dataset):
         self.std = std
         self.transform = None
         self.num_classes = 18
-
+        if label_col == "Class Mask" or "Class Age":
+            self.num_classes = 3
+        elif label_col == "Class Gender":
+            self.num_classes = 2
         self.setup()
         self.calc_statistics()
 
