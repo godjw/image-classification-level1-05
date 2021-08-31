@@ -33,8 +33,9 @@ def train(helper):
 
     DataInfo = getattr(import_module("dataset"), "TrainInfo")
     data_info = DataInfo(
-        file_dir=None,
-        data_dir=args.data_dir
+        file_dir=args.file_dir,
+        data_dir=args.data_dir,
+        new_dataset=args.new_dataset
     )
     train_df, valid_df, dist_df = data_info.split_dataset(args.val_ratio)
 
@@ -59,11 +60,10 @@ def train(helper):
     )
     train_set.set_transform(train_transform)
     valid_set.set_transform(val_transform)
-
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,
-        num_workers=multiprocessing.cpu_count() // 2,
+        # num_workers=multiprocessing.cpu_count() // 2,
         shuffle=True,
         pin_memory=is_cuda,
         drop_last=True,
@@ -72,7 +72,7 @@ def train(helper):
     valid_loader = DataLoader(
         valid_set,
         batch_size=args.val_batch_size,
-        num_workers=multiprocessing.cpu_count() // 2,
+        # num_workers=multiprocessing.cpu_count() // 2,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=True,
@@ -141,9 +141,9 @@ def train(helper):
                 writer.add_scalar("Train/loss", train_loss, epoch * len(train_loader) + idx)
                 writer.add_scalar("Train/accuracy", train_acc, epoch * len(train_loader) + idx)
                 writer.add_scalar("Train/f1", train_f1, epoch * len(train_loader) + idx)
-                # wandb.log({"Train/loss": train_loss,
-                #            "Train/accuracy": train_acc,
-                #            "Train/f1": train_f1 })
+                wandb.log({"Train/loss": train_loss,
+                           "Train/accuracy": train_acc,
+                           "Train/f1": train_f1 })
                 loss_value = 0
                 matches = 0
 
@@ -211,25 +211,24 @@ def train(helper):
             writer.add_scalar("Val/f1", val_f1, epoch)
             writer.add_figure("results", figure, epoch)
 
-            # wandb.log({"Val/loss": val_loss,
-            #            "Val/accuracy": val_acc,
-            #            "Val/f1": val_f1 })
+            wandb.log({"Val/loss": val_loss,
+                       "Val/accuracy": val_acc,
+                       "Val/f1": val_f1 })
         model.train()
     logger.save_confusion_matrix(num_classes=valid_set.num_classes, labels=val_labels, preds=val_preds, save_path=os.path.join(save_dir, f'{args.mode}confusion_matrix.png'))
 
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-
     parser.add_argument('--data_dir', type=str, default=os.environ.get('SM_CHANNEL_TRAIN', '/opt/ml/input/data/train/images'))
     parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_MODEL_DIR', './model'))
-
+    parser.add_argument('--file_dir', type=str, default='')
+    parser.add_argument('--new_dataset', type=bool, default=False)
     parser.add_argument('--seed', type=int, default=42, help='random seed (default: 42)')
     parser.add_argument('--epochs', type=int, default=5, help='number of epochs to train (default: 5)')
     parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset transform type (default: MaskBaseDataset)')
-    parser.add_argument('--transform', type=str, default=('BaseTransform', 'BaseTransform'), help='data transform type (default: ("BaseTransform", "CustomTransform"))')
-    parser.add_argument("--resize", nargs="+", type=list, default=(128, 96), help='resize size for image when training (default: (128, 96))')
+    parser.add_argument('--transform', type=str, default=('BaseTransform', 'CustomTransform'), help='data transform type (default: ("BaseTransform", "CustomTransform"))')
+    parser.add_argument("--resize", nargs="+", type=list, default=(512, 384), help='resize size for image when training (default: (512, 384))')
     parser.add_argument('--batch_size', type=int, default=64, help='input batch size for training (default: 128)')
     parser.add_argument('--val_batch_size', type=int, default=64, help='input batch size for validation (default: 1000)')
     parser.add_argument('--model', type=str, default='ResNet18Pretrained', help='model type (default: ResNet18Pretrained)')
@@ -251,9 +250,10 @@ if __name__ == '__main__':
         device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     )
 
-    # wb_object = json.loads(open("wandb_config.json"))
-    # project, entity, name = wb_object.values()
-    # wandb.init(project=project, entity=entity, config=args)
+    with open('wandb_config.json', 'r') as f:
+        wb_object = json.load(f)
+        project, entity, name = wb_object['init'].values()
+        wandb.init(project=project, entity=entity, config=args)
     print(args)
 
     train(helper=helper)

@@ -7,24 +7,27 @@ import torch
 from torch.utils.data import DataLoader
 
 from dataset import MaskBaseDataset, TestDataset
-from tqdm import tqdm
 
-def load_model(model_dir, device, model_name):
-    model_path = os.path.join(model_dir, model_name)
+
+def load_model(model_dir, device):
+    model_path = os.path.join(model_dir, args.model_name)
     model = torch.load(model_path, map_location=device)
 
     return model 
 
 
 @torch.no_grad()
-def inference(data_dir, model_dir, output_dir):
+def inference(data_dir, model_dir, output_dir, new_dataset):
     is_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if is_cuda else "cpu")
 
-    model = load_model(model_dir, device, args.model_name).to(device)
+    model = load_model(model_dir, device).to(device)
     model.eval()
 
-    img_root = os.path.join(data_dir, 'images')
+    if new_dataset:
+        img_root = os.path.join(data_dir, 'new_imgs')
+    else:
+        img_root = os.path.join(data_dir, 'images')
     info_path = os.path.join(data_dir, 'info.csv')
     info = pd.read_csv(info_path)
 
@@ -33,7 +36,7 @@ def inference(data_dir, model_dir, output_dir):
     loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=args.batch_size,
-        num_workers=8,
+        #num_workers=2,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=False,
@@ -42,7 +45,7 @@ def inference(data_dir, model_dir, output_dir):
     print("Calculating inference results..")
     preds = []
     with torch.no_grad():
-        for images in tqdm(loader):
+        for images in loader:
             images = images.to(device)
             pred = model(images)
             pred = pred.argmax(dim=-1)
@@ -51,7 +54,6 @@ def inference(data_dir, model_dir, output_dir):
     info['ans'] = preds
     info.to_csv(os.path.join(output_dir, f'output.csv'), index=False)
     print(f'Inference Done!')
-
 
 @torch.no_grad()
 def inference_with_ensemble(data_dir, model_dir, output_dir):
@@ -74,7 +76,7 @@ def inference_with_ensemble(data_dir, model_dir, output_dir):
     loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=args.batch_size,
-        num_workers=4,
+        #num_workers=1,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=False,
@@ -107,6 +109,7 @@ if __name__ == '__main__':
 
     # Container environment
     parser.add_argument('--data_dir', type=str, default=os.environ.get('SM_CHANNEL_EVAL', '/opt/ml/input/data/eval'))
+    parser.add_argument('--new_dataset', type=bool, default=False)
     parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_CHANNEL_MODEL', './model'))
     parser.add_argument('--name', type=str, default='exp')
     parser.add_argument('--output_dir', type=str, default=os.environ.get('SM_OUTPUT_DATA_DIR', './output'))
@@ -120,6 +123,6 @@ if __name__ == '__main__':
     os.makedirs(args.output_dir, exist_ok=True)
 
     if args.mode == 'all':
-        inference(data_dir=args.data_dir, model_dir=os.path.join(args.model_dir, args.name), output_dir=args.output_dir)
+        inference(data_dir=args.data_dir, model_dir=os.path.join(args.model_dir, args.name), output_dir=args.output_dir, new_dataset=args.new_dataset)
     elif args.mode == 'ensemble':
         inference_with_ensemble(data_dir=args.data_dir, model_dir=os.path.join(args.model_dir, args.name), output_dir=args.output_dir)
