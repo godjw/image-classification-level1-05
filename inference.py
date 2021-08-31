@@ -49,7 +49,7 @@ def inference(data_dir, model_dir, output_dir):
             preds.extend(pred.cpu().numpy())
 
     info['ans'] = preds
-    info.to_csv(os.path.join(output_dir, f'output.csv'), index=False)
+    info.to_csv(os.path.join(output_dir, f'output2.csv'), index=False)
     print(f'Inference Done!')
 
 
@@ -64,7 +64,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_name', type=str, default='best.pt')
 
     parser.add_argument('--batch_size', type=int, default=1000, help='input batch size for validing (default: 1000)')
-    parser.add_argument('--resize', type=tuple, default=(96, 128), help='resize size for image when you trained (default: (96, 128))')
+    parser.add_argument('--resize', type=tuple, default=(512, 384), help='resize size for image when you trained (default: (96, 128))')
     
     args = parser.parse_args()
 

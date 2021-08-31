@@ -74,7 +74,7 @@ def train(helper):
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,
-        num_workers=multiprocessing.cpu_count() // 2,
+        num_workers=8,
         shuffle=True,
         pin_memory=is_cuda,
         drop_last=True,
@@ -82,8 +82,8 @@ def train(helper):
 
     valid_loader = DataLoader(
         valid_set,
-        batch_size=args.val_batch_size,
-        num_workers=multiprocessing.cpu_count() // 2,
+        batch_size=args.batch_size,
+        num_workers=8,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=True,
@@ -111,6 +111,9 @@ def train(helper):
     best_val_acc = 0
     best_val_loss = np.inf
     best_f1 = 0
+
+    val_labels = []
+    val_preds = []
     for epoch in range(1, args.epochs + 1):
         loss_value = 0
         matches = 0
@@ -160,7 +163,7 @@ def train(helper):
                 
                 loss_value = 0
                 matches = 0
-
+        # optimizer.step()
         scheduler.step()
 
         model.eval()
@@ -172,11 +175,16 @@ def train(helper):
             figure = None
             for val_batch in tqdm(valid_loader, colour='GREEN'):
                 inputs, labels = val_batch
+                if epoch == args.epochs:
+                    val_labels.extend(map(torch.Tensor.item, labels))
+
                 inputs = inputs.to(device)
                 labels = labels.to(device)
 
                 outs = model(inputs)
                 preds = torch.argmax(outs, dim=-1)
+                if epoch == args.epochs:
+                    val_preds.extend(map(torch.Tensor.item, preds))
 
                 loss_item = criterion(outs, labels).item()
                 acc_item = (labels == preds).float().sum().item()
@@ -186,15 +194,15 @@ def train(helper):
                 val_acc_items.append(acc_item)
                 val_f1_items.append(f1_item)
 
-                if figure is None:
-                    imgs = torch.clone(inputs).detach(
-                    ).cpu().permute(0, 2, 3, 1).numpy()
-                    imgs = train_set.denormalize_image(
-                        imgs, train_set.mean, train_set.std)
-                    figure = logger.grid_image(
-                        imgs=imgs, labels=labels, preds=preds,
-                        n=16, shuffle=args.dataset != "MaskSplitByProfileDataset"
-                    )
+                # if figure is None:
+                #     imgs = torch.clone(inputs).detach(
+                #     ).cpu().permute(0, 2, 3, 1).numpy()
+                #     imgs = train_set.denormalize_image(
+                #         imgs, train_set.mean, train_set.std)
+                #     figure = logger.grid_image(
+                #         imgs=imgs, labels=labels, preds=preds,
+                #         n=16, shuffle=args.dataset != "MaskSplitByProfileDataset"
+                #     )
 
             val_loss = np.sum(val_loss_items) / len(valid_loader)
             val_acc = np.sum(val_acc_items) / len(valid_set)
@@ -223,14 +231,14 @@ def train(helper):
             writer.add_scalar("Val/loss", val_loss, epoch)
             writer.add_scalar("Val/accuracy", val_acc, epoch)
             writer.add_scalar("Val/f1", val_f1, epoch)
-            writer.add_figure("results", figure, epoch)
+            # writer.add_figure("results", figure, epoch)
 
             wandb.log({"Val/loss": val_loss,
                        "Val/accuracy": val_acc,
                        "Val/f1": val_f1})
 
         model.train()
-
+    logger.save_confusion_matrix(num_classes=valid_set.num_classes, labels=val_labels, preds=val_preds, save_path=os.path.join(save_dir, 'confusion_matrix.png'))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -249,7 +257,7 @@ if __name__ == '__main__':
     parser.add_argument('--transform', type=str, default='BaseTransform',
                         help='data transform type (default: BaseTransform)')
     parser.add_argument("--resize", nargs="+", type=list,
-                        default=(128, 96), help='resize size for image when training')
+                        default=(512, 384), help='resize size for image when training')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='input batch size for training (default: 64)')
     parser.add_argument('--val_batch_size', type=int, default=1000,
