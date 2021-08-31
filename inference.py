@@ -26,7 +26,8 @@ def inference(data_dir, model_dir, output_dir, new_dataset):
 
     if new_dataset:
         img_root = os.path.join(data_dir, 'new_imgs')
-    img_root = os.path.join(data_dir, 'images')
+    else:
+        img_root = os.path.join(data_dir, 'images')
     info_path = os.path.join(data_dir, 'info.csv')
     info = pd.read_csv(info_path)
 
@@ -35,7 +36,7 @@ def inference(data_dir, model_dir, output_dir, new_dataset):
     loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=args.batch_size,
-        num_workers=8,
+        num_workers=2,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=False,

@@ -62,7 +62,10 @@ def train(helper):
     train_set.set_transform(transform_train)
     valid_set.set_transform(transform_valid)
     """
-
+    train_set.set_transform(transform)
+    valid_set.set_transform(transform)
+    
+    
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,
