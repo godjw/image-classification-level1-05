@@ -56,7 +56,7 @@ def train(helper):
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,
-        num_workers=multiprocessing.cpu_count() // 2,
+        # num_workers=multiprocessing.cpu_count() // 2,
         shuffle=True,
         pin_memory=is_cuda,
         drop_last=True,
@@ -65,7 +65,7 @@ def train(helper):
     valid_loader = DataLoader(
         valid_set,
         batch_size=args.val_batch_size,
-        num_workers=multiprocessing.cpu_count() // 2,
+        # num_workers=multiprocessing.cpu_count() // 2,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=True,
@@ -213,7 +213,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=5, help='number of epochs to train (default: 5)')
     parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset transform type (default: MaskBaseDataset)')
     parser.add_argument('--transform', type=str, default=('BaseTransform', 'CustomTransform'), help='data transform type (default: ("BaseTransform", "CustomTransform"))')
-    parser.add_argument("--resize", nargs="+", type=list, default=(128, 96), help='resize size for image when training (default: (128, 96))')
+    parser.add_argument("--resize", nargs="+", type=list, default=(512, 384), help='resize size for image when training (default: (512, 384))')
     parser.add_argument('--batch_size', type=int, default=128, help='input batch size for training (default: 128)')
     parser.add_argument('--val_batch_size', type=int, default=1000, help='input batch size for validation (default: 1000)')
     parser.add_argument('--model', type=str, default='ResNet18Pretrained', help='model type (default: ResNet18Pretrained)')
