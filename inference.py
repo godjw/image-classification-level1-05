@@ -28,6 +28,7 @@ def inference(data_dir, model_dir, output_dir, new_dataset):
         img_root = os.path.join(data_dir, 'new_imgs')
     else:
         img_root = os.path.join(data_dir, 'images')
+    print(img_root)
     info_path = os.path.join(data_dir, 'info.csv')
     info = pd.read_csv(info_path)
 
@@ -116,7 +117,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_name', type=str, default='best.pt')
 
     parser.add_argument('--batch_size', type=int, default=1000, help='input batch size for validing (default: 1000)')
-    parser.add_argument('--resize', type=tuple, default=(128, 96), help='resize size for image when you trained (default: (128, 96))')
+    parser.add_argument('--resize', type=tuple, default=(256, 192), help='resize size for image when you trained (default: (128, 96))')
     parser.add_argument('--mode', type=str, default='all', help='choose all or ensemble')
     args = parser.parse_args()
 

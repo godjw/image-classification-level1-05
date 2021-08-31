@@ -6,7 +6,7 @@ from torchvision import models
 
 import numpy as np
 import math
-
+from efficientnet_pytorch import EfficientNet
 
 class BaseModel(nn.Module):
     def __init__(self, num_classes, freeze=[]):
@@ -48,6 +48,16 @@ class ResNet18Pretrained(nn.Module):
         torch.nn.init.xavier_uniform_(self.net.fc.weight)
         stdv = 1. / math.sqrt(self.net.fc.weight.size(1))
         self.net.fc.bias.data.uniform_(-stdv, stdv)
+        for layer in freeze:
+            getattr(self.net, layer).requires_grad_(False)
+        
+    def forward(self, x):
+        return self.net(x)
+
+class EfficientNetPretrained(nn.Module):
+    def __init__(self, num_classes, freeze=[]):
+        super().__init__()
+        self.net = EfficientNet.from_pretrained('efficientnet-b2', num_classes=num_classes)
         for layer in freeze:
             getattr(self.net, layer).requires_grad_(False)
         
