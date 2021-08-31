@@ -27,14 +27,9 @@ def train(helper):
 
     DataInfo = getattr(import_module("dataset"), "TrainInfo")
     data_info = DataInfo(
-<<<<<<< HEAD
         file_dir=args.file_dir,
         data_dir=args.data_dir,
         new_dataset=args.new_dataset
-=======
-        file_dir=None,
-        data_dir=args.data_dir
->>>>>>> 5bb8ccb62383b570794c2df16bd2b75250fcab84
     )
     train_df, valid_df, dist_df = data_info.split_dataset(args.val_ratio)
 
@@ -51,22 +46,6 @@ def train(helper):
         mean=train_set.mean,
         std=train_set.std,
     )
-<<<<<<< HEAD
-    dataset.set_transform(transform)
-    """
-    Please fill the code
-
-    transform_train = Transform([])
-    transform_valid = Transform([])
-
-    train_set.set_transform(transform_train)
-    valid_set.set_transform(transform_valid)
-    """
-    train_set.set_transform(transform)
-    valid_set.set_transform(transform)
-    
-    
-=======
     train_transform = Transforms[1](
         resize=args.resize,
         mean=train_set.mean,
@@ -74,8 +53,6 @@ def train(helper):
     )
     train_set.set_transform(train_transform)
     valid_set.set_transform(val_transform)
-
->>>>>>> 5bb8ccb62383b570794c2df16bd2b75250fcab84
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,
@@ -223,58 +200,10 @@ def train(helper):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-<<<<<<< HEAD
-    parser.add_argument('--data_dir', type=str, default=os.environ.get(
-        'SM_CHANNEL_TRAIN', '/opt/ml/input/data/train/images'))
-    parser.add_argument('--model_dir', type=str,
-                        default=os.environ.get('SM_MODEL_DIR', './model'))
-    parser.add_argument('--file_dir', type=str, default='')
-
-    parser.add_argument('--new_dataset', type=bool, default=False)
-
-    parser.add_argument('--seed', type=int, default=42,
-                        help='random seed (default: 42)')
-    parser.add_argument('--epochs', type=int, default=5,
-                        help='number of epochs to train (default: 5)')
-    parser.add_argument('--dataset', type=str, default='MaskBaseDataset',
-                        help='dataset transform type (default: MaskBaseDataset)')
-    parser.add_argument('--transform', type=str, default='BaseTransform',
-                        help='data transform type (default: BaseTransform)')
-    parser.add_argument("--resize", nargs="+", type=list,
-                        default=(128, 96), help='resize size for image when training')
-    parser.add_argument('--batch_size', type=int, default=64,
-                        help='input batch size for training (default: 64)')
-    parser.add_argument('--val_batch_size', type=int, default=1000,
-                        help='input batch size for validation (default: 1000)')
-    parser.add_argument('--model', type=str, default='ResNet18Pretrained',
-                        help='model type (default: ResNet18Pretrained)')
-    parser.add_argument('--optimizer', type=str, default='Adam',
-                        help='optimizer type (default: Adam)')
-    parser.add_argument('--lr', type=float, default=1e-3,
-                        help='learning rate (default: 1e-3)')
-    parser.add_argument('--val_ratio', type=float, default=0.2,
-                        help='ratio for validaton (default: 0.2)')
-    parser.add_argument('--criterion', type=str, default='cross_entropy',
-                        help='criterion type (default: cross_entropy)')
-    parser.add_argument('--lr_decay_step', type=int, default=20,
-                        help='learning rate scheduler deacy step (default: 20)')
-    parser.add_argument('--log_interval', type=int, default=20,
-                        help='how many batches to wait before logging training status')
-    parser.add_argument('--name', type=str, default='exp',
-                        help='model to save at {SM_MODEL_DIR}/{name}')
-    parser.add_argument('--mode', type=str, default='',
-                        help='select Mask, Age, Gender')
-    parser.add_argument('--model_name', type=str,
-                        default='best', help='custom model name')
-    parser.add_argument('--freeze', nargs='+', default=[],
-                        help='layers to freeze (default: [])')
-    parser.add_argument('--dump', type=bool, default=False,
-                        help="choose dump or not to save model")
-=======
-
     parser.add_argument('--data_dir', type=str, default=os.environ.get('SM_CHANNEL_TRAIN', '/opt/ml/input/data/train/images'))
     parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_MODEL_DIR', './model'))
-
+    parser.add_argument('--file_dir', type=str, default='')
+    parser.add_argument('--new_dataset', type=bool, default=False)
     parser.add_argument('--seed', type=int, default=42, help='random seed (default: 42)')
     parser.add_argument('--epochs', type=int, default=5, help='number of epochs to train (default: 5)')
     parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset transform type (default: MaskBaseDataset)')
@@ -294,7 +223,6 @@ if __name__ == '__main__':
     parser.add_argument('--model_name', type=str, default='best', help='custom model name')
     parser.add_argument('--freeze', nargs='+', default=[], help='layers to freeze (default: [])')
     parser.add_argument('--dump', type=bool, default=False, help="choose dump or not to save model")
->>>>>>> 5bb8ccb62383b570794c2df16bd2b75250fcab84
     args = parser.parse_args()
 
     helper = settings.SettingsHelper(

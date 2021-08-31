@@ -15,17 +15,8 @@ from transform import BaseTransform
 
 
 class TrainInfo():
-<<<<<<< HEAD
     def __init__(self, file_dir=None, data_dir='/opt/ml/input/data/train/images', new_dataset=False):
-        # Train info data
-        self.data = pd.read_csv(file_dir) if file_dir else pd.read_csv(
-            'processed_train.csv')
-
-        # Update directory
-=======
-    def __init__(self, file_dir=None, data_dir='/opt/ml/input/data/train/images'):
         self.data = pd.read_csv(file_dir) if file_dir else pd.read_csv('processed_train.csv')
->>>>>>> 5bb8ccb62383b570794c2df16bd2b75250fcab84
         self.data_dir = Path(data_dir)
         if new_dataset == False:
             self.update_data_dir()

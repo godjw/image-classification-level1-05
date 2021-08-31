@@ -36,7 +36,7 @@ def inference(data_dir, model_dir, output_dir, new_dataset):
     loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=args.batch_size,
-        num_workers=2,
+        #num_workers=2,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=False,
@@ -76,7 +76,7 @@ def inference_with_ensemble(data_dir, model_dir, output_dir):
     loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=args.batch_size,
-        num_workers=4,
+        #num_workers=1,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=False,
@@ -123,6 +123,6 @@ if __name__ == '__main__':
     os.makedirs(args.output_dir, exist_ok=True)
 
     if args.mode == 'all':
-        inference(data_dir=args.data_dir, model_dir=os.path.join(args.model_dir, args.name), output_dir=args.output_dir)
+        inference(data_dir=args.data_dir, model_dir=os.path.join(args.model_dir, args.name), output_dir=args.output_dir, new_dataset=args.new_dataset)
     elif args.mode == 'ensemble':
         inference_with_ensemble(data_dir=args.data_dir, model_dir=os.path.join(args.model_dir, args.name), output_dir=args.output_dir)
