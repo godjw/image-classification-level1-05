@@ -56,11 +56,7 @@ def train(helper):
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,
-<<<<<<< HEAD
-        #num_workers=multiprocessing.cpu_count() // 2,
-=======
         # num_workers=multiprocessing.cpu_count() // 2,
->>>>>>> 9c78bd5d4392b2ae1086babeff082b457d902563
         shuffle=True,
         pin_memory=is_cuda,
         drop_last=True,
@@ -69,11 +65,7 @@ def train(helper):
     valid_loader = DataLoader(
         valid_set,
         batch_size=args.val_batch_size,
-<<<<<<< HEAD
-        #num_workers=multiprocessing.cpu_count() // 2,
-=======
         # num_workers=multiprocessing.cpu_count() // 2,
->>>>>>> 9c78bd5d4392b2ae1086babeff082b457d902563
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=True,
