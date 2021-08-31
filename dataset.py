@@ -35,7 +35,6 @@ class TrainInfo():
         _size = len(_idxs)
         _size_valid = int(_size * val_size)
 
-        # Split DataFrame
         valid_idxs = set(random.sample(_idxs, _size_valid))
         valid_df = self.data.loc[self.data[crit_col].isin(valid_idxs)]
 

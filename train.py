@@ -21,6 +21,7 @@ import logger
 
 from dataset import MaskBaseDataset, TrainInfo
 import warnings
+import wandb
 
 def train(helper):
     warnings.filterwarnings('ignore')
@@ -136,7 +137,9 @@ def train(helper):
                 writer.add_scalar("Train/loss", train_loss, epoch * len(train_loader) + idx)
                 writer.add_scalar("Train/accuracy", train_acc, epoch * len(train_loader) + idx)
                 writer.add_scalar("Train/f1", train_f1, epoch * len(train_loader) + idx)
-
+                wandb.log({"Train/loss": train_loss,
+                           "Train/accuracy": train_acc,
+                           "Train/f1": train_f1 })
                 loss_value = 0
                 matches = 0
 
@@ -202,6 +205,10 @@ def train(helper):
             writer.add_scalar("Val/accuracy", val_acc, epoch)
             writer.add_scalar("Val/f1", val_f1, epoch)
             writer.add_figure("results", figure, epoch)
+
+            wandb.log({"Val/loss": val_loss,
+                       "Val/accuracy": val_acc,
+                       "Val/f1": val_f1 })
         model.train()
     logger.save_confusion_matrix(num_classes=valid_set.num_classes, labels=val_labels, preds=val_preds, save_path=os.path.join(save_dir, f'{args.mode}confusion_matrix.png'))
 
@@ -238,4 +245,10 @@ if __name__ == '__main__':
         args=args,
         device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     )
+
+    wb_object = json.loads(open("wandb_config.json"))
+    project, entity, name = wb_object.values()
+    wandb.init(project=project, entity=entity, config=args)
+    print(args)
+
     train(helper=helper)
