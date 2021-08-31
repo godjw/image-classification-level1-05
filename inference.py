@@ -52,6 +52,7 @@ def inference(data_dir, model_dir, output_dir):
     info.to_csv(os.path.join(output_dir, f'output.csv'), index=False)
     print(f'Inference Done!')
 
+
 @torch.no_grad()
 def inference_with_ensemble(data_dir, model_dir, output_dir):
     is_cuda = torch.cuda.is_available()

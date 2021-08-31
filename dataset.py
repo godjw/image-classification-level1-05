@@ -16,11 +16,7 @@ from transform import BaseTransform
 
 class TrainInfo():
     def __init__(self, file_dir=None, data_dir='/opt/ml/input/data/train/images'):
-        # Train info data
-        self.data = pd.read_csv(file_dir) if file_dir else pd.read_csv(
-            'processed_train.csv')
-
-        # Update directory
+        self.data = pd.read_csv(file_dir) if file_dir else pd.read_csv('processed_train.csv')
         self.data_dir = Path(data_dir)
         self.update_data_dir()
 
@@ -46,7 +42,6 @@ class TrainInfo():
         train_idxs = _idxs - valid_idxs
         train_df = self.data.loc[self.data[crit_col].isin(train_idxs)]
 
-        # Split Result
         split_result = dict(origin=self.data, train=train_df, valid=valid_df)
         split_result = self._split_result(split_result)
 

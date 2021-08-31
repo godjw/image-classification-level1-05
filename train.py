@@ -178,11 +178,11 @@ def train(helper):
             best_val_loss = min(best_val_loss, val_loss)
             if val_acc > best_val_acc:
                 print(f"New best model for val accuracy : {val_acc:3.2%}! saving the best model..")
-                torch.save(model, os.path.join(save_dir, f'{args.model_name}.pt'))
+                torch.save(model, os.path.join(save_dir, f'{args.mode if args.mode else args.model_name}.pt'))
                 best_val_acc = val_acc
             if val_f1 > best_f1:
                 print(f"New best model for f1 : {val_f1:3.2f}! saving the best model..")
-                torch.save(model, os.path.join(save_dir, f'{args.model_name}f1.pt'))
+                torch.save(model, os.path.join(save_dir, f'{args.mode if args.mode else args.model_name}f1.pt'))
                 best_f1 = val_f1
             print(
                 f'Validation:\n'
