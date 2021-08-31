@@ -23,7 +23,7 @@ class BaseTransform:
             T.Resize(resize, T.InterpolationMode.BICUBIC),
             T.CenterCrop((300, 200)),
             T.ToTensor(),
-            T.Normalize(mean=mean, std=std),
+            # T.Normalize(mean=mean, std=std),
         ]
 
     def __call__(self, image):

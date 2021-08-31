@@ -43,6 +43,7 @@ def train(helper):
     num_classes = valid_set.num_classes
 
     Transforms = list(map(lambda trf: getattr(import_module("transform"), trf), args.transform))
+
     val_transform = Transforms[0](
         resize=args.resize,
         mean=train_set.mean,
@@ -202,7 +203,7 @@ def train(helper):
             writer.add_scalar("Val/f1", val_f1, epoch)
             writer.add_figure("results", figure, epoch)
         model.train()
-    logger.save_confusion_matrix(num_classes=valid_set.num_classes, labels=val_labels, preds=val_preds, save_path=os.path.join(save_dir, 'confusion_matrix.png'))
+    logger.save_confusion_matrix(num_classes=valid_set.num_classes, labels=val_labels, preds=val_preds, save_path=os.path.join(save_dir, f'{args.mode}confusion_matrix.png'))
 
 
 
@@ -215,10 +216,10 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=42, help='random seed (default: 42)')
     parser.add_argument('--epochs', type=int, default=5, help='number of epochs to train (default: 5)')
     parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset transform type (default: MaskBaseDataset)')
-    parser.add_argument('--transform', type=str, default=('BaseTransform', 'CustomTransform'), help='data transform type (default: ("BaseTransform", "CustomTransform"))')
+    parser.add_argument('--transform', type=str, default=('BaseTransform', 'BaseTransform'), help='data transform type (default: ("BaseTransform", "CustomTransform"))')
     parser.add_argument("--resize", nargs="+", type=list, default=(128, 96), help='resize size for image when training (default: (128, 96))')
-    parser.add_argument('--batch_size', type=int, default=128, help='input batch size for training (default: 128)')
-    parser.add_argument('--val_batch_size', type=int, default=1000, help='input batch size for validation (default: 1000)')
+    parser.add_argument('--batch_size', type=int, default=64, help='input batch size for training (default: 128)')
+    parser.add_argument('--val_batch_size', type=int, default=64, help='input batch size for validation (default: 1000)')
     parser.add_argument('--model', type=str, default='ResNet18Pretrained', help='model type (default: ResNet18Pretrained)')
     parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer type (default: Adam)')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate (default: 1e-3)')

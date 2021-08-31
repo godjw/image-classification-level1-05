@@ -45,9 +45,10 @@ class ResNet18Pretrained(nn.Module):
         super().__init__()
         self.net = models.resnet18(pretrained=True)
         self.net.fc = torch.nn.Linear(in_features=512, out_features=num_classes, bias=True)
-        torch.nn.init.xavier_uniform_(self.net.fc.weight)
-        stdv = 1. / math.sqrt(self.net.fc.weight.size(1))
-        self.net.fc.bias.data.uniform_(-stdv, stdv)
+        nn.init.kaiming_normal_(self.net.fc.weight)
+        # torch.nn.init.xavier_uniform_(self.net.fc.weight)
+        # stdv = 1. / math.sqrt(self.net.fc.weight.size(1))
+        # self.net.fc.bias.data.uniform_(-stdv, stdv)
         for layer in freeze:
             getattr(self.net, layer).requires_grad_(False)
         
