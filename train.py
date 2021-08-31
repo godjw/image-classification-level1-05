@@ -160,12 +160,20 @@ def train(helper):
                 f'accuracy: {val_acc:>3.2%}\tloss: {val_loss:>4.2f}\n'
                 f'best acc : {best_val_acc:>3.2%}\tbest loss: {best_val_loss:>4.2f}\n'
             )
-
             wandb.log({"Val/epoch": epoch,
                        "Val/loss": val_loss,
                        "Val/accuracy": val_acc})
-        model.train()
 
+        model.train()
+        logger.save_confusion_matrix(
+            num_classes=valid_set.num_classes,
+            labels=val_labels, preds=val_preds,
+            save_path=os.path.join(save_dir,
+            f'{args.mode if args.mode else args.model_name}_confusion_matrix.png')
+        )
+
+            
+        model.train()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
