@@ -7,3 +7,4 @@ eval/
 *.gz
 ._train
 output/
+wandb/
