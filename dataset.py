@@ -31,7 +31,7 @@ class TrainInfo():
         paths_post = paths.str.split('/images').str[1]
         self.data['FullPath'] = paths_pre.str.cat(paths_post)
 
-    def split_dataset(self, val_size=0.2, crit_col='path', shuffle=True, random_state=32):
+    def split_dataset(self, val_size=0.1, crit_col='path', shuffle=True, random_state=32):
         if random_state:
             random.seed(random_state)
 

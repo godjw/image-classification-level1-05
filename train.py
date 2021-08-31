@@ -20,9 +20,10 @@ import settings
 import logger
 
 from dataset import MaskBaseDataset, TrainInfo
-
+import warnings
 
 def train(helper):
+    warnings.filterwarnings('ignore')
     args = helper.args
     device = helper.device
     is_cuda = helper.device == torch.device('cuda')
@@ -112,8 +113,10 @@ def train(helper):
         for idx, (imgs, labels) in enumerate(train_loader):
             imgs = imgs.to(device)
             labels = labels.to(device)
-
             outs = model(imgs)
+            # labels_one_hot = torch.zeros_like(outs).scatter_(1, labels.reshape(len(labels),1), 1)
+            loss_item = criterion(outs, labels).item()
+
             preds = torch.argmax(outs, dim=1)
             loss = criterion(outs, labels)
 
@@ -162,9 +165,12 @@ def train(helper):
                 labels = labels.to(device)
 
                 outs = model(inputs)
+                # labels_one_hot = torch.zeros_like(outs).scatter_(1, labels.reshape(len(labels),1), 1)
                 preds = torch.argmax(outs, dim=-1)
 
                 loss_item = criterion(outs, labels).item()
+
+
                 acc_item = (labels == preds).float().sum().item()
                 f1_item = f1_score(labels.cpu().numpy(),
                                    preds.cpu().numpy(), average='macro')
@@ -231,10 +237,10 @@ if __name__ == '__main__':
     parser.add_argument('--transform', type=str, default='BaseTransform',
                         help='data transform type (default: BaseTransform)')
     parser.add_argument("--resize", nargs="+", type=list,
-                        default=(128, 96), help='resize size for image when training')
+                        default=(512, 384), help='resize size for image when training')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='input batch size for training (default: 64)')
-    parser.add_argument('--val_batch_size', type=int, default=1000,
+    parser.add_argument('--val_batch_size', type=int, default=64,
                         help='input batch size for validation (default: 1000)')
     parser.add_argument('--model', type=str, default='ResNet18Pretrained',
                         help='model type (default: ResNet18Pretrained)')

@@ -1,6 +1,7 @@
 import torch
 
 from torchvision import transforms as T
+from torchvision.transforms.transforms import CenterCrop
 
 
 class AddGaussianNoise():
@@ -19,6 +20,7 @@ class BaseTransform:
     def __init__(self, resize, mean, std):
         self.transforms = [
             T.Resize(resize, T.InterpolationMode.BICUBIC),
+            T.CenterCrop((300, 200)),
             T.ToTensor(),
             T.Normalize(mean=mean, std=std),
         ]
