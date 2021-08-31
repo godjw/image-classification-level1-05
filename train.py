@@ -194,7 +194,12 @@ def train(helper):
             writer.add_scalar("Val/f1", val_f1, epoch)
             writer.add_figure("results", figure, epoch)
         model.train()
-    logger.save_confusion_matrix(num_classes=valid_set.num_classes, labels=val_labels, preds=val_preds, save_path=os.path.join(save_dir, 'confusion_matrix.png'))
+    logger.save_confusion_matrix(
+        num_classes=valid_set.num_classes,
+        labels=val_labels, preds=val_preds,
+        save_path=os.path.join(save_dir,
+        f'{args.mode if args.mode else args.model_name}_confusion_matrix.png')
+    )
 
 
 
