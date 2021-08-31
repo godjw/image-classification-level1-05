@@ -30,7 +30,7 @@ def train(helper):
     # processed_train.csv
     DataInfo = getattr(import_module("dataset"), "TrainInfo")
     data_info = DataInfo(
-        file_dir=None,
+        file_dir=args.file_dir,
         data_dir=args.data_dir
     )
     data_df = data_info.data
@@ -61,9 +61,6 @@ def train(helper):
     train_set.set_transform(transform_train)
     valid_set.set_transform(transform_valid)
     """
-
-    train_set.set_transform(transform)
-    valid_set.set_transform(transform)
 
     train_loader = DataLoader(
         train_set,
@@ -216,12 +213,11 @@ def train(helper):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-
     parser.add_argument('--data_dir', type=str, default=os.environ.get(
         'SM_CHANNEL_TRAIN', '/opt/ml/input/data/train/images'))
     parser.add_argument('--model_dir', type=str,
                         default=os.environ.get('SM_MODEL_DIR', './model'))
-
+    parser.add_argument('--file_dir', type=str, default='')
     parser.add_argument('--seed', type=int, default=42,
                         help='random seed (default: 42)')
     parser.add_argument('--epochs', type=int, default=5,
