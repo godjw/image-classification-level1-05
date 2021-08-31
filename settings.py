@@ -10,7 +10,7 @@ import numpy as np
 
 
 class SettingsHelper:
-    def __init__(self, args, device=torch.device('cuda')):
+    def __init__(self, args, device=torch.device("cuda")):
         self.args = args
         self.device = device
         self._set_seed(seed=args.seed)
@@ -29,8 +29,8 @@ class SettingsHelper:
         if not save_dir.exists() or dump:
             return str(save_dir)
         else:
-            dirs = glob.glob(f'{save_dir}*')
-            matches = [re.search(rf'{save_dir.stem}(\d+)', d) for d in dirs]
+            dirs = glob.glob(f"{save_dir}*")
+            matches = [re.search(rf"{save_dir.stem}(\d+)", d) for d in dirs]
             i = [int(m.groups()[0]) for m in matches if m]
             n = max(i) + 1 if i else 2
-            return f'{save_dir}{n}'
+            return f"{save_dir}{n}"
