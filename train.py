@@ -41,22 +41,18 @@ def train(helper):
     mean = (0.56019358, 0.52410121, 0.501457)
     std = std = (0.23318603, 0.24300033, 0.24567522)
     Dataset = getattr(import_module("dataset"), args.dataset)
-    dataset = Dataset(data_df, mean=mean, std=std)
-    train_set = Dataset(train_df, mean=mean, std=std)
-    valid_set = Dataset(valid_df, mean=mean, std=std)
-    num_classes = dataset.num_classes
 
+    dataset = Dataset(data_df, mean=mean, std=std, label_col='Class' + args.mode.capitalize())
+    train_set = Dataset(train_df, mean=mean, std=std, label_col='Class' + args.mode.capitalize())
+    valid_set = Dataset(valid_df, mean=mean, std=std, label_col='Class' + args.mode.capitalize())
+    num_classes = dataset.num_classes
     Transform = getattr(import_module("transform"), args.transform)
     transform = Transform(
         resize=args.resize,
         mean=train_set.mean,
         std=train_set.std,
     )
-    train_set.set_transform(transform)
-    valid_set.set_transform(transform)
-
     dataset.set_transform(transform)
-
     """
     Please fill the code
 
@@ -88,7 +84,6 @@ def train(helper):
     Model = getattr(import_module("model"), args.model)
     model = Model(num_classes=num_classes, freeze=args.freeze).to(device)
     model = torch.nn.DataParallel(model)
-
     criterion = get_criterion(args.criterion)
     Optimizer = getattr(import_module('torch.optim'), args.optimizer)
     optimizer = Optimizer(
@@ -100,7 +95,7 @@ def train(helper):
 
     save_dir = helper.get_save_dir(dump=args.dump)
     writer = SummaryWriter(log_dir=save_dir)
-    with open(os.path.join(save_dir, f'{args.model_name}.json'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(save_dir, f'{args.mode}.json'), 'w', encoding='utf-8') as f:
         json.dump(vars(args), f, ensure_ascii=False, indent=4)
 
     best_val_acc = 0
@@ -190,16 +185,18 @@ def train(helper):
             val_f1 = np.average(val_f1_items)
             best_val_loss = min(best_val_loss, val_loss)
             if val_acc > best_val_acc:
-                print(
-                    f"New best model for val accuracy : {val_acc:3.2f}%! saving the best model..")
-                torch.save(model, os.path.join(
-                    save_dir, f'{args.model_name}.pt'))
+                print(f"New best model for val accuracy : {val_acc:3.2f}%! saving the best model..")
+                if args.mode:
+                    torch.save(model, os.path.join(save_dir, f'{args.mode}.pt'))
+                else:
+                    torch.save(model, os.path.join(save_dir, f'{args.model_name}.pt'))
                 best_val_acc = val_acc
             if val_f1 > best_f1:
-                print(
-                    f"New best model for f1 : {val_f1:3.2f}%! saving the best model..")
-                torch.save(model, os.path.join(
-                    save_dir, f'{args.model_name}f1.pt'))
+                print(f"New best model for f1 : {val_f1:3.2f}%! saving the best model..")
+                if args.mode:
+                    torch.save(model, os.path.join(save_dir, f'{args.mode}f1.pt'))
+                else:
+                    torch.save(model, os.path.join(save_dir, f'{args.model_name}f1.pt'))
                 best_f1 = val_f1
             # torch.save(model.module.state_dict(), os.path.join(save_dir, 'last.pt'))
             print(
@@ -214,32 +211,55 @@ def train(helper):
         model.train()
 
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-
-    parser.add_argument('--data_dir', type=str, default=os.environ.get('SM_CHANNEL_TRAIN', '/opt/ml/input/data/train/images'))
-    parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_MODEL_DIR', './model'))
+    parser.add_argument('--data_dir', type=str, default=os.environ.get(
+        'SM_CHANNEL_TRAIN', '/opt/ml/input/data/train/images'))
+    parser.add_argument('--model_dir', type=str,
+                        default=os.environ.get('SM_MODEL_DIR', './model'))
     parser.add_argument('--file_dir', type=str, default='')
+
     parser.add_argument('--new_dataset', type=bool, default=False)
-    parser.add_argument('--seed', type=int, default=42, help='random seed (default: 42)')
-    parser.add_argument('--epochs', type=int, default=5, help='number of epochs to train (default: 5)')
-    parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset transform type (default: MaskBaseDataset)')
-    parser.add_argument('--transform', type=str, default='BaseTransform', help='data transform type (default: BaseTransform)')
-    parser.add_argument("--resize", nargs="+", type=list, default=(128, 96), help='resize size for image when training')
-    parser.add_argument('--batch_size', type=int, default=64, help='input batch size for training (default: 64)')
-    parser.add_argument('--val_batch_size', type=int, default=1000, help='input batch size for validation (default: 1000)')
-    parser.add_argument('--model', type=str, default='ResNet18Pretrained', help='model type (default: ResNet18Pretrained)')
-    parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer type (default: Adam)')
-    parser.add_argument('--lr', type=float, default=1e-3, help='learning rate (default: 1e-3)')
-    parser.add_argument('--val_ratio', type=float, default=0.2, help='ratio for validaton (default: 0.2)')
-    parser.add_argument('--criterion', type=str, default='cross_entropy', help='criterion type (default: cross_entropy)')
-    parser.add_argument('--lr_decay_step', type=int, default=20, help='learning rate scheduler deacy step (default: 20)')
-    parser.add_argument('--log_interval', type=int, default=20, help='how many batches to wait before logging training status')
-    parser.add_argument('--name', type=str, default='exp', help='model to save at {SM_MODEL_DIR}/{name}')
-    parser.add_argument('--mode', type=str, default='all', help='select mask, age, gender, all')
-    parser.add_argument('--model_name', type=str, default='best', help='custom model name')
-    parser.add_argument('--freeze', nargs='+', default=[], help='layers to freeze (default: [])')
-    parser.add_argument('--dump', type=bool, default=False, help="choose dump or not to save model")
+
+    parser.add_argument('--seed', type=int, default=42,
+                        help='random seed (default: 42)')
+    parser.add_argument('--epochs', type=int, default=5,
+                        help='number of epochs to train (default: 5)')
+    parser.add_argument('--dataset', type=str, default='MaskBaseDataset',
+                        help='dataset transform type (default: MaskBaseDataset)')
+    parser.add_argument('--transform', type=str, default='BaseTransform',
+                        help='data transform type (default: BaseTransform)')
+    parser.add_argument("--resize", nargs="+", type=list,
+                        default=(128, 96), help='resize size for image when training')
+    parser.add_argument('--batch_size', type=int, default=64,
+                        help='input batch size for training (default: 64)')
+    parser.add_argument('--val_batch_size', type=int, default=1000,
+                        help='input batch size for validation (default: 1000)')
+    parser.add_argument('--model', type=str, default='ResNet18Pretrained',
+                        help='model type (default: ResNet18Pretrained)')
+    parser.add_argument('--optimizer', type=str, default='Adam',
+                        help='optimizer type (default: Adam)')
+    parser.add_argument('--lr', type=float, default=1e-3,
+                        help='learning rate (default: 1e-3)')
+    parser.add_argument('--val_ratio', type=float, default=0.2,
+                        help='ratio for validaton (default: 0.2)')
+    parser.add_argument('--criterion', type=str, default='cross_entropy',
+                        help='criterion type (default: cross_entropy)')
+    parser.add_argument('--lr_decay_step', type=int, default=20,
+                        help='learning rate scheduler deacy step (default: 20)')
+    parser.add_argument('--log_interval', type=int, default=20,
+                        help='how many batches to wait before logging training status')
+    parser.add_argument('--name', type=str, default='exp',
+                        help='model to save at {SM_MODEL_DIR}/{name}')
+    parser.add_argument('--mode', type=str, default='',
+                        help='select Mask, Age, Gender')
+    parser.add_argument('--model_name', type=str,
+                        default='best', help='custom model name')
+    parser.add_argument('--freeze', nargs='+', default=[],
+                        help='layers to freeze (default: [])')
+    parser.add_argument('--dump', type=bool, default=False,
+                        help="choose dump or not to save model")
     args = parser.parse_args()
 
     helper = settings.SettingsHelper(

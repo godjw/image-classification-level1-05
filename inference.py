@@ -17,13 +17,15 @@ def load_model(model_dir, device):
 
 
 @torch.no_grad()
-def inference(data_dir, model_dir, output_dir):
+def inference(data_dir, model_dir, output_dir, new_dataset):
     is_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if is_cuda else "cpu")
 
     model = load_model(model_dir, device).to(device)
     model.eval()
 
+    if new_dataset:
+        img_root = os.path.join(data_dir, 'new_imgs')
     img_root = os.path.join(data_dir, 'images')
     info_path = os.path.join(data_dir, 'info.csv')
     info = pd.read_csv(info_path)
@@ -58,15 +60,16 @@ if __name__ == '__main__':
 
     # Container environment
     parser.add_argument('--data_dir', type=str, default=os.environ.get('SM_CHANNEL_EVAL', '/opt/ml/input/data/eval'))
+    parser.add_argument('--new_dataset', type=bool, default=False)
     parser.add_argument('--model_dir', type=str, default=os.environ.get('SM_CHANNEL_MODEL', './model'))
     parser.add_argument('--name', type=str, default='exp')
     parser.add_argument('--output_dir', type=str, default=os.environ.get('SM_OUTPUT_DATA_DIR', './output'))
     parser.add_argument('--model_name', type=str, default='best.pt')
 
     parser.add_argument('--batch_size', type=int, default=1000, help='input batch size for validing (default: 1000)')
-    parser.add_argument('--resize', type=tuple, default=(96, 128), help='resize size for image when you trained (default: (96, 128))')
+    parser.add_argument('--resize', type=tuple, default=(256, 192), help='resize size for image when you trained (default: (256, 192))')
     
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
-    inference(data_dir=args.data_dir, model_dir=os.path.join(args.model_dir, args.name), output_dir=args.output_dir)
+    inference(data_dir=args.data_dir, model_dir=os.path.join(args.model_dir, args.name), output_dir=args.output_dir, new_dataset=args.new_dataset)
