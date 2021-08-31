@@ -15,10 +15,11 @@ from transform import BaseTransform
 
 
 class TrainInfo():
-    def __init__(self, file_dir=None, data_dir='/opt/ml/input/data/train/images'):
+    def __init__(self, file_dir=None, data_dir='/opt/ml/input/data/train/images', new_dataset=False):
         self.data = pd.read_csv(file_dir) if file_dir else pd.read_csv('processed_train.csv')
         self.data_dir = Path(data_dir)
-        self.update_data_dir()
+        if new_dataset == False:
+            self.update_data_dir()
 
     def update_data_dir(self):
         paths = self.data['FullPath']
@@ -85,7 +86,6 @@ class MaskBaseDataset(Dataset):
             self.num_classes = 3
         elif label_col == "Class Gender":
             self.num_classes = 2
-
         self.setup()
         self.calc_statistics()
 
