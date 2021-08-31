@@ -105,6 +105,14 @@ def train(helper):
             imgs = imgs.to(device)
             labels = labels.to(device)
 
+            ###cutmix
+            #Dataset = getattr(import_module("dataset"), args.dataset)
+            #train_set = Dataset(train_df, mean=mean, std=std, label_col='Class' + args.mode.capitalize())
+
+            #Cutmix = getattr(import_module('cutmix'), args.use_cutmix)
+            #cutmix = Cutmix(model, criterion, 1, imgs, labels, device)
+            #loss, preds = cutmix.start_cutmix()
+
             outs = model(imgs)
             preds = torch.argmax(outs, dim=1)
             loss = criterion(outs, labels)
@@ -234,6 +242,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_name', type=str, default='best', help='custom model name')
     parser.add_argument('--freeze', nargs='+', default=[], help='layers to freeze (default: [])')
     parser.add_argument('--dump', type=bool, default=False, help="choose dump or not to save model")
+    parser.add_argument('--use_cutmix', type=str, default='Cutmix', help="use cutmix")
     args = parser.parse_args()
 
     helper = settings.SettingsHelper(
