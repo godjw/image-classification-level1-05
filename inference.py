@@ -52,8 +52,9 @@ def inference(data_dir, model_dir, output_dir):
     info.to_csv(os.path.join(output_dir, f'output.csv'), index=False)
     print(f'Inference Done!')
 
+
 @torch.no_grad()
-def inference_with_ansemble(data_dir, model_dir, output_dir):
+def inference_with_ensemble(data_dir, model_dir, output_dir):
     is_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if is_cuda else "cpu")
 
@@ -113,12 +114,12 @@ if __name__ == '__main__':
 
     parser.add_argument('--batch_size', type=int, default=1000, help='input batch size for validing (default: 1000)')
     parser.add_argument('--resize', type=tuple, default=(96, 128), help='resize size for image when you trained (default: (96, 128))')
-    parser.add_argument('--mode', type=str, default='all', help='choose all or ansemble')
+    parser.add_argument('--mode', type=str, default='all', help='choose all or ensemble')
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
 
     if args.mode == 'all':
         inference(data_dir=args.data_dir, model_dir=os.path.join(args.model_dir, args.name), output_dir=args.output_dir)
-    elif args.mode == 'ansemble':
-        inference_with_ansemble(data_dir=args.data_dir, model_dir=os.path.join(args.model_dir, args.name), output_dir=args.output_dir)
+    elif args.mode == 'ensemble':
+        inference_with_ensemble(data_dir=args.data_dir, model_dir=os.path.join(args.model_dir, args.name), output_dir=args.output_dir)

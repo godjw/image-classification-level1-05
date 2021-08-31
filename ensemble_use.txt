@@ -6,4 +6,4 @@ train.py
 5. mask, age, gender 순서 무관
 
 inference.py
-1. python inference.py --mode ansemble --name [해당폴더]
+1. python inference.py --mode ensemble --name [해당폴더]

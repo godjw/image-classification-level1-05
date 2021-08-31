@@ -19,6 +19,7 @@ class AddGaussianNoise():
 class BaseTransform:
     def __init__(self, resize, mean, std):
         self.transforms = [
+            # T.CenterCrop((320, 256)),
             T.Resize(resize, T.InterpolationMode.BICUBIC),
             T.CenterCrop((300, 200)),
             T.ToTensor(),
@@ -33,8 +34,6 @@ class CustomTransform(BaseTransform):
     def __init__(self, resize, mean, std):
         super().__init__(resize=resize, mean=mean, std=std)
         self.transforms = [
-            T.CenterCrop((320, 256)),
             *self.transforms,
-            T.ColorJitter(0.1, 0.1, 0.1, 0.1),
-            AddGaussianNoise()
+            T.RandomHorizontalFlip(p=0.5)
         ]
