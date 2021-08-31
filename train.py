@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import f1_score
 from torchvision import models
+import torch.nn as nn
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,6 +23,7 @@ import logger
 from dataset import MaskBaseDataset, TrainInfo
 import warnings
 import wandb
+
 
 def train(helper):
     warnings.filterwarnings('ignore')
@@ -80,6 +82,7 @@ def train(helper):
     model = Model(num_classes=num_classes, freeze=args.freeze).to(device)
     model = torch.nn.DataParallel(model)
     criterion = get_criterion(args.criterion)
+    # criterion = nn.MultiLabelSoftMarginLoss().to(device)
     Optimizer = getattr(import_module('torch.optim'), args.optimizer)
     optimizer = Optimizer(
         filter(lambda p: p.requires_grad, model.parameters()),
@@ -109,11 +112,12 @@ def train(helper):
             imgs = imgs.to(device)
             labels = labels.to(device)
             outs = model(imgs)
-            # labels_one_hot = torch.zeros_like(outs).scatter_(1, labels.reshape(len(labels),1), 1)
-            loss_item = criterion(outs, labels).item()
-
+            labels_one_hot = torch.zeros_like(outs).scatter_(1, labels.reshape(len(labels),1), 1)
+            loss = criterion(outs, labels_one_hot.type(torch.long))
+            print(loss.item())
             preds = torch.argmax(outs, dim=1)
-            loss = criterion(outs, labels)
+            
+            # loss = criterion(outs, labels)
 
             optimizer.zero_grad()
             loss.backward()
@@ -137,9 +141,9 @@ def train(helper):
                 writer.add_scalar("Train/loss", train_loss, epoch * len(train_loader) + idx)
                 writer.add_scalar("Train/accuracy", train_acc, epoch * len(train_loader) + idx)
                 writer.add_scalar("Train/f1", train_f1, epoch * len(train_loader) + idx)
-                wandb.log({"Train/loss": train_loss,
-                           "Train/accuracy": train_acc,
-                           "Train/f1": train_f1 })
+                # wandb.log({"Train/loss": train_loss,
+                #            "Train/accuracy": train_acc,
+                #            "Train/f1": train_f1 })
                 loss_value = 0
                 matches = 0
 
@@ -161,12 +165,13 @@ def train(helper):
                 labels = labels.to(device)
 
                 outs = model(inputs)
+                labels_one_hot = torch.zeros_like(outs).scatter_(1, labels.reshape(len(labels),1), 1)
                 # labels_one_hot = torch.zeros_like(outs).scatter_(1, labels.reshape(len(labels),1), 1)
                 preds = torch.argmax(outs, dim=-1)
                 if epoch == args.epochs:
                     val_preds.extend(map(torch.Tensor.item, preds))
 
-                loss_item = criterion(outs, labels).item()
+                loss_item = criterion(outs, labels_one_hot.type(torch.long)).item()
 
 
                 acc_item = (labels == preds).float().sum().item()
@@ -206,9 +211,9 @@ def train(helper):
             writer.add_scalar("Val/f1", val_f1, epoch)
             writer.add_figure("results", figure, epoch)
 
-            wandb.log({"Val/loss": val_loss,
-                       "Val/accuracy": val_acc,
-                       "Val/f1": val_f1 })
+            # wandb.log({"Val/loss": val_loss,
+            #            "Val/accuracy": val_acc,
+            #            "Val/f1": val_f1 })
         model.train()
     logger.save_confusion_matrix(num_classes=valid_set.num_classes, labels=val_labels, preds=val_preds, save_path=os.path.join(save_dir, f'{args.mode}confusion_matrix.png'))
 
@@ -246,9 +251,9 @@ if __name__ == '__main__':
         device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     )
 
-    wb_object = json.loads(open("wandb_config.json"))
-    project, entity, name = wb_object.values()
-    wandb.init(project=project, entity=entity, config=args)
+    # wb_object = json.loads(open("wandb_config.json"))
+    # project, entity, name = wb_object.values()
+    # wandb.init(project=project, entity=entity, config=args)
     print(args)
 
     train(helper=helper)

@@ -1,8 +1,7 @@
 {
     "init" : {
-              "project" : "JunshickProject",
+              "project" : "jinwoo",
               "entity" : "aim5",
-              "name" : "resnet_freeze"
+              "name" : "model"
              }
- 
 }
