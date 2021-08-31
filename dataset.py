@@ -78,8 +78,7 @@ class TrainInfo():
 
 
 class MaskBaseDataset(Dataset):
-    def __init__(self, data_info, mean=None, std=None, train_dir=None, path_col='FullPath', label_col='Class'):
-        # Data Info
+    def __init__(self, data_info, mean=None, std=None, path_col='FullPath', label_col='Class'):
         self.data_info = data_info
         self.path_col = path_col
         self.path_label = label_col
@@ -88,6 +87,10 @@ class MaskBaseDataset(Dataset):
         self.std = std
         self.transform = None
         self.num_classes = 18
+        if label_col == "Class Mask" or "Class Age":
+            self.num_classes = 3
+        elif label_col == "Class Gender":
+            self.num_classes = 2
 
         self.setup()
         self.calc_statistics()

@@ -35,8 +35,8 @@ def train(helper):
     mean = (0.56019358, 0.52410121, 0.501457)
     std = (0.23318603, 0.24300033, 0.24567522)
     Dataset = getattr(import_module("dataset"), args.dataset)
-    train_set = Dataset(train_df, mean=mean, std=std)
-    valid_set = Dataset(valid_df, mean=mean, std=std)
+    train_set = Dataset(train_df, mean=mean, std=std, label_col='Class' + args.mode.capitalize())
+    valid_set = Dataset(valid_df, mean=mean, std=std, label_col='Class' + args.mode.capitalize())
     num_classes = valid_set.num_classes
 
     Transforms = list(map(lambda trf: getattr(import_module("transform"), trf), args.transform))
@@ -74,7 +74,6 @@ def train(helper):
     Model = getattr(import_module("model"), args.model)
     model = Model(num_classes=num_classes, freeze=args.freeze).to(device)
     model = torch.nn.DataParallel(model)
-
     criterion = get_criterion(args.criterion)
     Optimizer = getattr(import_module('torch.optim'), args.optimizer)
     optimizer = Optimizer(
@@ -86,7 +85,7 @@ def train(helper):
 
     save_dir = helper.get_save_dir(dump=args.dump)
     writer = SummaryWriter(log_dir=save_dir)
-    with open(os.path.join(save_dir, f'{args.model_name}.json'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(save_dir, f'{args.mode}.json'), 'w', encoding='utf-8') as f:
         json.dump(vars(args), f, ensure_ascii=False, indent=4)
 
     best_val_acc = 0
@@ -195,7 +194,8 @@ def train(helper):
             writer.add_scalar("Val/f1", val_f1, epoch)
             writer.add_figure("results", figure, epoch)
         model.train()
-    logger.save_confusion_matrix(labels=val_labels, preds=val_preds, save_path=os.path.join(save_dir, 'confusion_matrix.png'))
+    logger.save_confusion_matrix(num_classes=valid_set.num_classes, labels=val_labels, preds=val_preds, save_path=os.path.join(save_dir, 'confusion_matrix.png'))
+
 
 
 if __name__ == '__main__':
@@ -219,7 +219,7 @@ if __name__ == '__main__':
     parser.add_argument('--lr_decay_step', type=int, default=20, help='learning rate scheduler deacy step (default: 20)')
     parser.add_argument('--log_interval', type=int, default=20, help='how many batches to wait before logging training status')
     parser.add_argument('--name', type=str, default='exp', help='model to save at {SM_MODEL_DIR}/{name}')
-    parser.add_argument('--mode', type=str, default='all', help='select mask, age, gender, all')
+    parser.add_argument('--mode', type=str, default='', help='select mask, age, gender, ensemble')
     parser.add_argument('--model_name', type=str, default='best', help='custom model name')
     parser.add_argument('--freeze', nargs='+', default=[], help='layers to freeze (default: [])')
     parser.add_argument('--dump', type=bool, default=False, help="choose dump or not to save model")

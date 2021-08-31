@@ -46,12 +46,12 @@ def grid_image(imgs, labels, preds, n=16, shuffle=False):
 
     return figure
 
-def save_confusion_matrix(labels, preds, save_path):
+def save_confusion_matrix(num_classes, labels, preds, save_path):
     confusion = confusion_matrix(y_true=labels, y_pred=preds, normalize='true')
     df = pd.DataFrame(
         confusion,
-        index=list(range(18)),
-        columns=list(range(18))
+        index=list(range(num_classes)),
+        columns=list(range(num_classes))
     )
     df = df.fillna(0)
 
