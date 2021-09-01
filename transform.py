@@ -38,7 +38,7 @@ class GenderTransform:
             # T.CenterCrop((320, 256)),
             T.Resize(resize, T.InterpolationMode.BICUBIC),
             T.CenterCrop((300, 200)),
-            T.ColorJitter(brightness=.5, hue=.3),
+            # T.ColorJitter(brightness=.5, hue=.3),
             T.ToTensor(),
             # T.ColorJitter(),
             # T.Grayscale(),
