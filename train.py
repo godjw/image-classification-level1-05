@@ -63,7 +63,7 @@ def train(helper):
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,
-        # num_workers=multiprocessing.cpu_count() // 2,
+        num_workers=multiprocessing.cpu_count() // 2,
         shuffle=True,
         pin_memory=is_cuda,
         drop_last=True,
@@ -71,8 +71,8 @@ def train(helper):
 
     valid_loader = DataLoader(
         valid_set,
-        batch_size=args.val_batch_size,
-        # num_workers=multiprocessing.cpu_count() // 2,
+        batch_size=args.batch_size,
+        num_workers=multiprocessing.cpu_count() // 2,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=True,
@@ -186,20 +186,20 @@ def train(helper):
                 val_acc_items.append(acc_item)
                 val_f1_items.append(f1_item)
 
-                if figure is None:
-                    imgs = (
-                        torch.clone(inputs).detach().cpu().permute(0, 2, 3, 1).numpy()
-                    )
-                    imgs = train_set.denormalize_image(
-                        imgs, train_set.mean, train_set.std
-                    )
-                    figure = logger.grid_image(
-                        imgs=imgs,
-                        labels=labels,
-                        preds=preds,
-                        n=16,
-                        shuffle=args.dataset != "MaskSplitByProfileDataset",
-                    )
+                # if figure is None:
+                #     imgs = (
+                #         torch.clone(inputs).detach().cpu().permute(0, 2, 3, 1).numpy()
+                #     )
+                #     imgs = train_set.denormalize_image(
+                #         imgs, train_set.mean, train_set.std
+                #     )
+                #     figure = logger.grid_image(
+                #         imgs=imgs,
+                #         labels=labels,
+                #         preds=preds,
+                #         n=16,
+                #         shuffle=args.dataset != "MaskSplitByProfileDataset",
+                #     )
 
             val_loss = np.sum(val_loss_items) / len(valid_loader)
             val_acc = np.sum(val_acc_items) / len(valid_set)
@@ -234,7 +234,7 @@ def train(helper):
             writer.add_scalar("Val/loss", val_loss, epoch)
             writer.add_scalar("Val/accuracy", val_acc, epoch)
             writer.add_scalar("Val/f1", val_f1, epoch)
-            writer.add_figure("results", figure, epoch)
+            # writer.add_figure("results", figure, epoch)
 
             wandb.log({"Val/loss": val_loss, "Val/accuracy": val_acc, "Val/f1": val_f1})
         model.train()
@@ -246,13 +246,6 @@ def train(helper):
             save_dir,
             f"{args.mode if args.mode else args.model_name}_confusion_matrix.png",
         ),
-    )
-
-    logger.save_confusion_matrix(
-        num_classes=valid_set.num_classes,
-        labels=val_labels,
-        preds=val_preds,
-        save_path=os.path.join(save_dir, "confusion_matrix.png"),
     )
 
 
