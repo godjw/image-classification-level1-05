@@ -42,6 +42,7 @@ def train(helper):
     num_classes = valid_set.num_classes
 
     Transforms = list(map(lambda trf: getattr(import_module("transform"), trf), args.transform))
+    print(f'resize: {args.resize}')
     val_transform = Transforms[0](
         resize=args.resize,
         mean=train_set.mean,
@@ -57,7 +58,7 @@ def train(helper):
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,
-        # num_workers=multiprocessing.cpu_count() // 2,
+        num_workers=multiprocessing.cpu_count() // 2,
         shuffle=True,
         pin_memory=is_cuda,
         drop_last=True,
@@ -65,8 +66,8 @@ def train(helper):
 
     valid_loader = DataLoader(
         valid_set,
-        batch_size=args.val_batch_size,
-        # num_workers=multiprocessing.cpu_count() // 2,
+        batch_size=args.batch_size,
+        num_workers=multiprocessing.cpu_count() // 2,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=True,
@@ -103,19 +104,17 @@ def train(helper):
 
         for idx, (imgs, labels) in enumerate(train_loader):
             imgs = imgs.to(device)
-            labels = labels.to(device)
+            labels = labels.to(device)#
 
             ###cutmix
-            #Dataset = getattr(import_module("dataset"), args.dataset)
-            #train_set = Dataset(train_df, mean=mean, std=std, label_col='Class' + args.mode.capitalize())
+            Cutmix = getattr(import_module('cutmix'), args.use_cutmix)
+            cutmix = Cutmix(model, criterion, 1, imgs, labels, device)
+            loss, preds = cutmix.start_cutmix()
 
-            #Cutmix = getattr(import_module('cutmix'), args.use_cutmix)
-            #cutmix = Cutmix(model, criterion, 1, imgs, labels, device)
-            #loss, preds = cutmix.start_cutmix()
-
-            outs = model(imgs)
-            preds = torch.argmax(outs, dim=1)
-            loss = criterion(outs, labels)
+            ###standard
+            #outs = model(imgs)
+            #preds = torch.argmax(outs, dim=1)
+            #loss = criterion(outs, labels)
 
             optimizer.zero_grad()
             loss.backward()
@@ -227,14 +226,14 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=5, help='number of epochs to train (default: 5)')
     parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset transform type (default: MaskBaseDataset)')
     parser.add_argument('--transform', type=str, default=('BaseTransform', 'CustomTransform'), help='data transform type (default: ("BaseTransform", "CustomTransform"))')
-    parser.add_argument("--resize", nargs="+", type=list, default=(512, 384), help='resize size for image when training (default: (512, 384))')
+    parser.add_argument("--resize", nargs="+", type=int, default=(512, 384), help='resize size for image when training (default: (512, 384))')
     parser.add_argument('--batch_size', type=int, default=128, help='input batch size for training (default: 128)')
     parser.add_argument('--val_batch_size', type=int, default=1000, help='input batch size for validation (default: 1000)')
     parser.add_argument('--model', type=str, default='ResNet18Pretrained', help='model type (default: ResNet18Pretrained)')
     parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer type (default: Adam)')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate (default: 1e-3)')
     parser.add_argument('--val_ratio', type=float, default=0.2, help='ratio for validaton (default: 0.2)')
-    parser.add_argument('--criterion', type=str, default='cross_entropy', help='criterion type (default: cross_entropy)')
+    parser.add_argument('--criterion', type=str, default='cross_entropy', help='criterion type (defaxult: cross_entropy)')
     parser.add_argument('--lr_decay_step', type=int, default=20, help='learning rate scheduler deacy step (default: 20)')
     parser.add_argument('--log_interval', type=int, default=20, help='how many batches to wait before logging training status')
     parser.add_argument('--name', type=str, default='exp', help='model to save at {SM_MODEL_DIR}/{name}')
@@ -253,7 +252,7 @@ if __name__ == '__main__':
     with open('wandb_config.json', 'r') as f:
         wb_object = json.load(f)
         project, entity, name = wb_object['init'].values()
-        wandb.init(project=project, entity=entity, config=args)
+        wandb.init(project=project, entity=entity, name = name, config=args)
     print(args)
 
     train(helper=helper)

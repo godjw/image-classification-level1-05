@@ -2,7 +2,7 @@
     "init" : {
               "project" : "JunshickProject",
               "entity" : "aim5",
-              "name" : "resnet_freeze"
+              "name" : "regular"
              }
  
 }

@@ -12,14 +12,14 @@ class Cutmix():
         self.device = device
         self.loss = None
         self.preds = None
+        self.matches = None
 
     def start_cutmix(self):
-
-        if self.beta>0 and np.random.random()>0.5: #cutmix executed
+        #and np.random.random()
+        if self.beta>0: #cutmix executed
             
             lamb = np.random.beta(self.beta, self.beta)
             rand_index = torch.randperm(self.images.size()[0]).to(self.device)
-            rand_index = np.random.permutation(len(self.images))#index random sort
             
             target_a = self.labels #original label
             target_b = self.labels[rand_index] #patch label
@@ -38,8 +38,8 @@ class Cutmix():
             self.loss = self.criterion(outputs, self.labels)
 
         self.preds = torch.argmax(outputs, dim=1)
-    
-        return self.loss, self.preds
+        #self.matches = self.
+        return self.loss, self.preds, #self.matches
 
     def rand_bbox(self, size, lam): #size: [Batch_size, Channel, Width, Height]
 
