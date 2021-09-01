@@ -21,9 +21,7 @@ class TrainInfo:
         data_dir="/opt/ml/input/data/train/images",
         new_dataset=False,
     ):
-        self.data = (
-            pd.read_csv(file_dir) if file_dir else pd.read_csv("processed_train.csv")
-        )
+        self.data = pd.read_csv(file_dir) if file_dir else pd.read_csv("processed_train.csv")
         self.data_dir = Path(data_dir)
 
         # self.data = self.data.query('(age <= 20) | (age >=35 & age <= 45) | (age >= 60)')
@@ -37,9 +35,7 @@ class TrainInfo:
         paths_post = paths.str.split("/images").str[1]
         self.data["FullPath"] = paths_pre.str.cat(paths_post)
 
-    def split_dataset(
-        self, val_size=0.2, crit_col="path", shuffle=True, random_state=32
-    ):
+    def split_dataset(self, val_size=0.2, crit_col="path", shuffle=True, random_state=32):
         if random_state:
             random.seed(random_state)
 
@@ -52,7 +48,7 @@ class TrainInfo:
 
         train_idxs = _idxs - valid_idxs
         train_df = self.data.loc[self.data[crit_col].isin(train_idxs)]
-        train_df = train_df.query("(age <= 20) | (age >=30 & age <= 50) | (age >= 60)")
+        # train_df = train_df.query("(age <= 20) | (age >=30 & age <= 50) | (age >= 60)")
 
         split_result = dict(origin=self.data, train=train_df, valid=valid_df)
         split_result = self._split_result(split_result)
@@ -83,9 +79,7 @@ class TrainInfo:
 
 
 class MaskBaseDataset(Dataset):
-    def __init__(
-        self, data_info, mean=None, std=None, path_col="FullPath", label_col="Class"
-    ):
+    def __init__(self, data_info, mean=None, std=None, path_col="FullPath", label_col="Class"):
         self.data_info = data_info
         self.path_col = path_col
         self.path_label = label_col
@@ -160,9 +154,7 @@ class MaskBaseDataset(Dataset):
 
 
 class TestDataset(Dataset):
-    def __init__(
-        self, img_paths, resize, mean=(0.548, 0.504, 0.479), std=(0.237, 0.247, 0.246)
-    ):
+    def __init__(self, img_paths, resize, mean=(0.548, 0.504, 0.479), std=(0.237, 0.247, 0.246)):
         self.img_paths = img_paths
         self.transform = BaseTransform(resize=resize, mean=mean, std=std)
 

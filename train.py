@@ -29,25 +29,17 @@ def train(helper):
     is_cuda = helper.device == torch.device("cuda")
 
     DataInfo = getattr(import_module("dataset"), "TrainInfo")
-    data_info = DataInfo(
-        file_dir=args.file_dir, data_dir=args.data_dir, new_dataset=args.new_dataset
-    )
+    data_info = DataInfo(file_dir=args.file_dir, data_dir=args.data_dir, new_dataset=args.new_dataset)
     train_df, valid_df, dist_df = data_info.split_dataset(args.val_ratio)
 
     mean = (0.56019358, 0.52410121, 0.501457)
     std = (0.23318603, 0.24300033, 0.24567522)
     Dataset = getattr(import_module("dataset"), args.dataset)
-    train_set = Dataset(
-        train_df, mean=mean, std=std, label_col="Class" + args.mode.capitalize()
-    )
-    valid_set = Dataset(
-        valid_df, mean=mean, std=std, label_col="Class" + args.mode.capitalize()
-    )
+    train_set = Dataset(train_df, mean=mean, std=std, label_col="Class" + args.mode.capitalize())
+    valid_set = Dataset(valid_df, mean=mean, std=std, label_col="Class" + args.mode.capitalize())
     num_classes = valid_set.num_classes
 
-    Transforms = list(
-        map(lambda trf: getattr(import_module("transform"), trf), args.transform)
-    )
+    Transforms = list(map(lambda trf: getattr(import_module("transform"), trf), args.transform))
     val_transform = Transforms[0](
         resize=args.resize,
         mean=train_set.mean,
@@ -120,9 +112,7 @@ def train(helper):
 
             loss_value += loss.item()
             matches += (preds == labels).float().mean().item()
-            accumulated_f1 += f1_score(
-                labels.cpu().numpy(), preds.cpu().numpy(), average="macro"
-            )
+            accumulated_f1 += f1_score(labels.cpu().numpy(), preds.cpu().numpy(), average="macro")
             iter_count += 1
 
             if (idx + 1) % args.log_interval == 0:
@@ -136,12 +126,8 @@ def train(helper):
                     f"[{idx + 1:0{len(str(len(train_loader)))}d}/{len(train_loader)}]\n"
                     f"training accuracy: {train_acc:>3.2%}\ttraining loss: {train_loss:>4.4f}\ttraining f1: {train_f1:>4.4f}\tlearning rate: {current_lr}\n"
                 )
-                writer.add_scalar(
-                    "Train/loss", train_loss, epoch * len(train_loader) + idx
-                )
-                writer.add_scalar(
-                    "Train/accuracy", train_acc, epoch * len(train_loader) + idx
-                )
+                writer.add_scalar("Train/loss", train_loss, epoch * len(train_loader) + idx)
+                writer.add_scalar("Train/accuracy", train_acc, epoch * len(train_loader) + idx)
                 writer.add_scalar("Train/f1", train_f1, epoch * len(train_loader) + idx)
                 wandb.log(
                     {
@@ -177,9 +163,7 @@ def train(helper):
 
                 loss_item = criterion(outs, labels).item()
                 acc_item = (labels == preds).float().sum().item()
-                f1_item = f1_score(
-                    labels.cpu().numpy(), preds.cpu().numpy(), average="macro"
-                )
+                f1_item = f1_score(labels.cpu().numpy(), preds.cpu().numpy(), average="macro")
                 val_loss_items.append(loss_item)
                 val_acc_items.append(acc_item)
                 val_f1_items.append(f1_item)
@@ -205,14 +189,10 @@ def train(helper):
             best_val_loss = min(best_val_loss, val_loss)
 
             if val_acc > best_val_acc:
-                print(
-                    f"New best model for val accuracy : {val_acc:3.2%}! saving the best model.."
-                )
+                print(f"New best model for val accuracy : {val_acc:3.2%}! saving the best model..")
                 torch.save(
                     model,
-                    os.path.join(
-                        save_dir, f"{args.mode if args.mode else args.model_name}.pt"
-                    ),
+                    os.path.join(save_dir, f"{args.mode if args.mode else args.model_name}.pt"),
                 )
                 best_val_acc = val_acc
                 logger.save_confusion_matrix(
@@ -228,9 +208,7 @@ def train(helper):
                 print(f"New best model for f1 : {val_f1:3.2f}! saving the best model..")
                 torch.save(
                     model,
-                    os.path.join(
-                        save_dir, f"{args.mode if args.mode else args.model_name}f1.pt"
-                    ),
+                    os.path.join(save_dir, f"{args.mode if args.mode else args.model_name}f1.pt"),
                 )
                 best_f1 = val_f1
                 logger.save_confusion_matrix(
@@ -263,17 +241,11 @@ if __name__ == "__main__":
         type=str,
         default=os.environ.get("SM_CHANNEL_TRAIN", "/opt/ml/input/data/train/images"),
     )
-    parser.add_argument(
-        "--model_dir", type=str, default=os.environ.get("SM_MODEL_DIR", "./model")
-    )
+    parser.add_argument("--model_dir", type=str, default=os.environ.get("SM_MODEL_DIR", "./model"))
     parser.add_argument("--file_dir", type=str, default="")
     parser.add_argument("--new_dataset", type=bool, default=False)
-    parser.add_argument(
-        "--seed", type=int, default=42, help="random seed (default: 42)"
-    )
-    parser.add_argument(
-        "--epochs", type=int, default=5, help="number of epochs to train (default: 5)"
-    )
+    parser.add_argument("--seed", type=int, default=42, help="random seed (default: 42)")
+    parser.add_argument("--epochs", type=int, default=5, help="number of epochs to train (default: 5)")
     parser.add_argument(
         "--dataset",
         type=str,
@@ -311,12 +283,8 @@ if __name__ == "__main__":
         default="ResNet18Pretrained",
         help="model type (default: ResNet18Pretrained)",
     )
-    parser.add_argument(
-        "--optimizer", type=str, default="Adam", help="optimizer type (default: Adam)"
-    )
-    parser.add_argument(
-        "--lr", type=float, default=1e-3, help="learning rate (default: 1e-3)"
-    )
+    parser.add_argument("--optimizer", type=str, default="Adam", help="optimizer type (default: Adam)")
+    parser.add_argument("--lr", type=float, default=1e-3, help="learning rate (default: 1e-3)")
     parser.add_argument(
         "--val_ratio",
         type=float,
@@ -341,21 +309,12 @@ if __name__ == "__main__":
         default=20,
         help="how many batches to wait before logging training status",
     )
-    parser.add_argument(
-        "--name", type=str, default="exp", help="model to save at {SM_MODEL_DIR}/{name}"
-    )
-    parser.add_argument(
-        "--mode", type=str, default="", help="select mask, age, gender, ensemble"
-    )
-    parser.add_argument(
-        "--model_name", type=str, default="best", help="custom model name"
-    )
-    parser.add_argument(
-        "--freeze", nargs="+", default=[], help="layers to freeze (default: [])"
-    )
-    parser.add_argument(
-        "--dump", type=bool, default=False, help="choose dump or not to save model"
-    )
+    parser.add_argument("--name", type=str, default="exp", help="model to save at {SM_MODEL_DIR}/{name}")
+    parser.add_argument("--mode", type=str, default="", help="select mask, age, gender, ensemble")
+    parser.add_argument("--model_name", type=str, default="best", help="custom model name")
+    parser.add_argument("--freeze", nargs="+", default=[], help="layers to freeze (default: [])")
+    parser.add_argument("--dump", type=bool, default=False, help="choose dump or not to save model")
+
     args = parser.parse_args()
 
     wandb_file = json.load(open("wandb_config.json"))
