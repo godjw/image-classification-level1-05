@@ -93,8 +93,6 @@ def train(helper):
     best_val_loss = np.inf
     best_f1 = 0
 
-    val_labels = []
-    val_preds = []
     for epoch in range(1, args.epochs + 1):
         loss_value = 0
         matches = 0
@@ -145,6 +143,8 @@ def train(helper):
             val_acc_items = []
             val_f1_items = []
 
+            val_labels = []
+            val_preds = []
             figure = None
             for val_batch in tqdm(valid_loader, colour='GREEN'):
                 inputs, labels = val_batch
@@ -183,10 +183,22 @@ def train(helper):
                 print(f"New best model for val accuracy : {val_acc:3.2%}! saving the best model..")
                 torch.save(model, os.path.join(save_dir, f'{args.mode if args.mode else args.model_name}.pt'))
                 best_val_acc = val_acc
+                logger.save_confusion_matrix(
+                    num_classes=valid_set.num_classes,
+                    labels=val_labels, preds=val_preds,
+                    save_path=os.path.join(save_dir,
+                    f'f1_{args.mode if args.mode else args.model_name}_confusion_matrix.png')
+                )
             if val_f1 > best_f1:
                 print(f"New best model for f1 : {val_f1:3.2f}! saving the best model..")
                 torch.save(model, os.path.join(save_dir, f'{args.mode if args.mode else args.model_name}f1.pt'))
                 best_f1 = val_f1
+                logger.save_confusion_matrix(
+                    num_classes=valid_set.num_classes,
+                    labels=val_labels, preds=val_preds,
+                    save_path=os.path.join(save_dir,
+                    f'acc_{args.mode if args.mode else args.model_name}_confusion_matrix.png')
+                )
             print(
                 f'Validation:\n'
                 f'accuracy: {val_acc:>3.2%}\tloss: {val_loss:>4.2f}\tf1: {val_f1:>4.2f}\n'
@@ -201,12 +213,6 @@ def train(helper):
                        "Val/accuracy": val_acc,
                        "Val/f1": val_f1 })
         model.train()
-    logger.save_confusion_matrix(
-        num_classes=valid_set.num_classes,
-        labels=val_labels, preds=val_preds,
-        save_path=os.path.join(save_dir,
-        f'{args.mode if args.mode else args.model_name}_confusion_matrix.png')
-    )
 
 
 if __name__ == '__main__':
