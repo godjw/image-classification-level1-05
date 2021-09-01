@@ -1,6 +1,6 @@
 {
     "init" : {
-              "project" : "JunshickProject",
+              "project" : "JinwonProject",
               "entity" : "aim5",
               "name" : "resnet_freeze"
              }

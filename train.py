@@ -208,7 +208,6 @@ def train(helper):
     )
 
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_dir', type=str, default=os.environ.get('SM_CHANNEL_TRAIN', '/opt/ml/input/data/train/images'))
@@ -241,7 +240,11 @@ if __name__ == '__main__':
         device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     )
 
+<<<<<<< HEAD
     with open('wandb_config.json', 'r') as f:    
+=======
+    with open('wandb_config.json', 'r') as f:
+>>>>>>> 161d42a46b8b1d03f245e002bd2d305d78be1d0f
         wb_object = json.load(f)
         project, entity, name = wb_object['init'].values()
         wandb.init(project=project, entity=entity, config=args)
