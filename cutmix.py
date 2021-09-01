@@ -25,7 +25,7 @@ class Cutmix():
             target_b = self.labels[rand_index] #patch label
 
             bbx1, bby1, bbx2, bby2 = self.rand_bbox(self.images.size(), lamb)
-            self.images[:, :, bbx1:bbx2, bby1:bby2] = self.images[rand_index, :, bbx1:bbx2, bby1:bby2]
+            self.images[:, :, bbx1:bbx2, bby1:bby2] = self.images[rand_index, :, bbx1:bbx2, bby1:bby2] #image 
     
             lamb = 1-((bbx2-bbx1) * (bby2-bby1)/(self.images.size()[-1]*self.images.size()[-2]))
 

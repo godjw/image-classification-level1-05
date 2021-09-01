@@ -58,7 +58,7 @@ def train(helper):
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,
-        num_workers=multiprocessing.cpu_count() // 2,
+        #num_workers=multiprocessing.cpu_count() // 2,
         shuffle=True,
         pin_memory=is_cuda,
         drop_last=True,
@@ -67,7 +67,7 @@ def train(helper):
     valid_loader = DataLoader(
         valid_set,
         batch_size=args.val_batch_size,
-        num_workers=multiprocessing.cpu_count() // 2,
+        #num_workers=multiprocessing.cpu_count() // 2,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=True,
@@ -105,14 +105,14 @@ def train(helper):
             labels = labels.to(device)#
 
             ###cutmix
-            Cutmix = getattr(import_module('cutmix'), args.use_cutmix)
-            cutmix = Cutmix(model, criterion, 1, imgs, labels, device)
-            loss, preds = cutmix.start_cutmix()
+            #Cutmix = getattr(import_module('cutmix'), args.use_cutmix)
+            #cutmix = Cutmix(model, criterion, 1, imgs, labels, device)
+            #loss, preds = cutmix.start_cutmix()
 
             ###standard
-            #outs = model(imgs)
-            #preds = torch.argmax(outs, dim=1)
-            #loss = criterion(outs, labels)
+            outs = model(imgs)
+            preds = torch.argmax(outs, dim=1)
+            loss = criterion(outs, labels)
 
             optimizer.zero_grad()
             loss.backward()
