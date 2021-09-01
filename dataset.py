@@ -11,7 +11,7 @@ from torch.utils.data import Dataset
 from PIL import Image
 from tqdm import tqdm
 
-from transform import BaseTransform
+from transform import BaseTransform, GenderTransform
 
 
 class TrainInfo():
@@ -118,6 +118,8 @@ class MaskBaseDataset(Dataset):
         label = self.get_label(index)
 
         image_transform = self.transform(image)
+        # if self.path_label == "Class Age" or self.path_label == "Class Gender":
+        #     image_transform = image_transform[:, 0:150, :]
         return image_transform, label
 
     def __len__(self):
@@ -165,3 +167,23 @@ class TestDataset(Dataset):
 
     def __len__(self):
         return len(self.img_paths)
+
+class TestDataset2(Dataset):
+    def __init__(self, img_paths, resize, mean=(0.548, 0.504, 0.479), std=(0.237, 0.247, 0.246)):
+        self.img_paths = img_paths
+        self.transform = GenderTransform(
+            resize=resize,
+            mean=mean,
+            std=std
+        )
+
+    def __getitem__(self, index):
+        image = Image.open(self.img_paths[index])
+
+        if self.transform:
+            image = self.transform(image)
+        return image[:, 0:150, :]
+
+    def __len__(self):
+        return len(self.img_paths)
+

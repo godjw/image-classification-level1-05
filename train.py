@@ -39,6 +39,19 @@ def train(helper):
     )
     train_df, valid_df, dist_df = data_info.split_dataset(args.val_ratio)
 
+    # age = train_df.age
+    # age_filter_1 = ~((56 <= age) & (age < 60))
+    # age_filter_2 = ~((30 <= age) & (age < 35))
+    # age_filter = age_filter_1 & age_filter_2
+
+    # train_df = train_df.loc[age_filter, :]
+
+    age = valid_df.age
+    age_filter_1 = ~((55 <= age) & (age < 60))
+    age_filter_2 = ~((30 <= age) & (age < 35))
+    age_filter = age_filter_1 & age_filter_2
+    valid_df = valid_df.loc[age_filter, :]
+
     mean = (0.56019358, 0.52410121, 0.501457)
     std = (0.23318603, 0.24300033, 0.24567522)
     Dataset = getattr(import_module("dataset"), args.dataset)
@@ -63,7 +76,7 @@ def train(helper):
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,
-        # num_workers=multiprocessing.cpu_count() // 2,
+        num_workers=multiprocessing.cpu_count() // 2,
         shuffle=True,
         pin_memory=is_cuda,
         drop_last=True,
@@ -72,7 +85,7 @@ def train(helper):
     valid_loader = DataLoader(
         valid_set,
         batch_size=args.val_batch_size,
-        # num_workers=multiprocessing.cpu_count() // 2,
+        num_workers=multiprocessing.cpu_count() // 2,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=True,
@@ -114,9 +127,7 @@ def train(helper):
             outs = model(imgs)
             labels_one_hot = torch.zeros_like(outs).scatter_(1, labels.reshape(len(labels),1), 1)
             loss = criterion(outs, labels_one_hot.type(torch.long))
-            print(loss.item())
             preds = torch.argmax(outs, dim=1)
-            
             # loss = criterion(outs, labels)
 
             optimizer.zero_grad()
@@ -166,13 +177,12 @@ def train(helper):
 
                 outs = model(inputs)
                 labels_one_hot = torch.zeros_like(outs).scatter_(1, labels.reshape(len(labels),1), 1)
-                # labels_one_hot = torch.zeros_like(outs).scatter_(1, labels.reshape(len(labels),1), 1)
                 preds = torch.argmax(outs, dim=-1)
                 if epoch == args.epochs:
                     val_preds.extend(map(torch.Tensor.item, preds))
 
                 loss_item = criterion(outs, labels_one_hot.type(torch.long)).item()
-
+                # loss_item = criterion(outs, labels).item()
 
                 acc_item = (labels == preds).float().sum().item()
                 f1_item = f1_score(labels.cpu().numpy(), preds.cpu().numpy(), average='macro')
@@ -227,7 +237,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=42, help='random seed (default: 42)')
     parser.add_argument('--epochs', type=int, default=5, help='number of epochs to train (default: 5)')
     parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset transform type (default: MaskBaseDataset)')
-    parser.add_argument('--transform', type=str, default=('BaseTransform', 'CustomTransform'), help='data transform type (default: ("BaseTransform", "CustomTransform"))')
+    parser.add_argument('--transform', type=str, default=("BaseTransform", "CustomTransform"), help='data transform type (default: ("BaseTransform", "CustomTransform"))')
     parser.add_argument("--resize", nargs="+", type=list, default=(512, 384), help='resize size for image when training (default: (512, 384))')
     parser.add_argument('--batch_size', type=int, default=64, help='input batch size for training (default: 128)')
     parser.add_argument('--val_batch_size', type=int, default=64, help='input batch size for validation (default: 1000)')

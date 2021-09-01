@@ -1,7 +1,8 @@
 import torch
 
 from torchvision import transforms as T
-from torchvision.transforms.transforms import CenterCrop
+from torchvision.transforms.transforms import ColorJitter
+
 
 
 class AddGaussianNoise():
@@ -22,7 +23,25 @@ class BaseTransform:
             # T.CenterCrop((320, 256)),
             T.Resize(resize, T.InterpolationMode.BICUBIC),
             T.CenterCrop((300, 200)),
+            # T.ColorJitter(brightness=.5, hue=.3),
             T.ToTensor(),
+            
+            # T.Normalize(mean=mean, std=std),
+        ]
+
+    def __call__(self, image):
+        return T.Compose(self.transforms)(image)
+
+class GenderTransform:
+    def __init__(self, resize, mean, std):
+        self.transforms = [
+            # T.CenterCrop((320, 256)),
+            T.Resize(resize, T.InterpolationMode.BICUBIC),
+            T.CenterCrop((300, 200)),
+            T.ColorJitter(brightness=.5, hue=.3),
+            T.ToTensor(),
+            # T.ColorJitter(),
+            # T.Grayscale(),
             # T.Normalize(mean=mean, std=std),
         ]
 

@@ -6,11 +6,11 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 
-from dataset import MaskBaseDataset, TestDataset
+from dataset import *
 
-
-def load_model(model_dir, device):
-    model_path = os.path.join(model_dir, args.model_name)
+from tqdm import tqdm
+def load_model(model_dir, device, model_name):
+    model_path = os.path.join(model_dir, model_name)
     model = torch.load(model_path, map_location=device)
 
     return model 
@@ -21,7 +21,7 @@ def inference(data_dir, model_dir, output_dir, new_dataset):
     is_cuda = torch.cuda.is_available()
     device = torch.device("cuda" if is_cuda else "cpu")
 
-    model = load_model(model_dir, device).to(device)
+    model = load_model(model_dir, device, args.model_name).to(device)
     model.eval()
 
     if new_dataset:
@@ -36,7 +36,7 @@ def inference(data_dir, model_dir, output_dir, new_dataset):
     loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=args.batch_size,
-        #num_workers=2,
+        num_workers=8,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=False,
@@ -61,8 +61,8 @@ def inference_with_ensemble(data_dir, model_dir, output_dir):
     device = torch.device("cuda" if is_cuda else "cpu")
 
     age_model = load_model(model_dir, device, 'agef1.pt').to(device)
-    gender_model = load_model(model_dir, device, 'genderf1.pt').to(device)
-    mask_model  = load_model(model_dir, device, 'maskf1.pt').to(device)
+    gender_model = load_model(model_dir, device, 'gender_model2.pt').to(device)
+    mask_model  = load_model(model_dir, device, 'mask_model4.pt').to(device)
     age_model.eval()
     gender_model.eval()
     mask_model.eval()
@@ -73,10 +73,19 @@ def inference_with_ensemble(data_dir, model_dir, output_dir):
 
     img_paths = [os.path.join(img_root, img_id) for img_id in info.ImageID]
     dataset = TestDataset(img_paths, args.resize)
+    dataset2 = TestDataset2(img_paths, args.resize)
     loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=args.batch_size,
-        #num_workers=1,
+        num_workers=8,
+        shuffle=False,
+        pin_memory=is_cuda,
+        drop_last=False,
+    )
+    loader2 = torch.utils.data.DataLoader(
+        dataset2,
+        batch_size=args.batch_size,
+        num_workers=8,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=False,
@@ -85,13 +94,14 @@ def inference_with_ensemble(data_dir, model_dir, output_dir):
     print("Calculating inference results..")
     preds = []
     with torch.no_grad():
-        for images in tqdm(loader):
+        for images, images2 in tqdm(zip(loader, loader2)):
 
             images = images.to(device)
+            images2 = images2.to(device)
             pred = mask_model(images)
             pred_mask = pred.argmax(dim=-1)
             
-            pred = age_model(images)
+            pred = age_model(images2)
             pred_age = pred.argmax(dim=-1)
             
             pred = gender_model(images)
