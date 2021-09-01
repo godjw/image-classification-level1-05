@@ -7,3 +7,5 @@ eval/
 *.gz
 ._train
 output/
+wandb/
+wandb_config.json

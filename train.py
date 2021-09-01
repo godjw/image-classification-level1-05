@@ -241,9 +241,10 @@ if __name__ == '__main__':
         device=torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     )
 
-    wb_object = json.loads(open("wandb_config.json"))
-    project, entity, name = wb_object.values()
-    wandb.init(project=project, entity=entity, config=args)
+    with open('wandb_config.json', 'r') as f:    
+        wb_object = json.load(f)
+        project, entity, name = wb_object['init'].values()
+        wandb.init(project=project, entity=entity, config=args)
     print(args)
 
     train(helper=helper)
