@@ -57,7 +57,7 @@ def train(helper):
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,
-        # num_workers=multiprocessing.cpu_count() // 2,
+        num_workers=multiprocessing.cpu_count() // 2,
         shuffle=True,
         pin_memory=is_cuda,
         drop_last=True,
@@ -66,7 +66,7 @@ def train(helper):
     valid_loader = DataLoader(
         valid_set,
         batch_size=args.val_batch_size,
-        # num_workers=multiprocessing.cpu_count() // 2,
+        num_workers=multiprocessing.cpu_count() // 2,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=True,
@@ -148,16 +148,14 @@ def train(helper):
             figure = None
             for val_batch in tqdm(valid_loader, colour='GREEN'):
                 inputs, labels = val_batch
-                if epoch == args.epochs:
-                    val_labels.extend(map(torch.Tensor.item, labels))
+                val_labels.extend(map(torch.Tensor.item, labels))
 
                 inputs = inputs.to(device)
                 labels = labels.to(device)
 
                 outs = model(inputs)
                 preds = torch.argmax(outs, dim=-1)
-                if epoch == args.epochs:
-                    val_preds.extend(map(torch.Tensor.item, preds))
+                val_preds.extend(map(torch.Tensor.item, preds))
 
                 loss_item = criterion(outs, labels).item()
                 acc_item = (labels == preds).float().sum().item()
@@ -186,8 +184,7 @@ def train(helper):
                 logger.save_confusion_matrix(
                     num_classes=valid_set.num_classes,
                     labels=val_labels, preds=val_preds,
-                    save_path=os.path.join(save_dir,
-                    f'f1_{args.mode if args.mode else args.model_name}_confusion_matrix.png')
+                    save_path=os.path.join(save_dir, f'f1_{args.mode if args.mode else args.model_name}_confusion_matrix.png')
                 )
             if val_f1 > best_f1:
                 print(f"New best model for f1 : {val_f1:3.2f}! saving the best model..")
@@ -196,8 +193,7 @@ def train(helper):
                 logger.save_confusion_matrix(
                     num_classes=valid_set.num_classes,
                     labels=val_labels, preds=val_preds,
-                    save_path=os.path.join(save_dir,
-                    f'acc_{args.mode if args.mode else args.model_name}_confusion_matrix.png')
+                    save_path=os.path.join(save_dir, f'acc_{args.mode if args.mode else args.model_name}_confusion_matrix.png')
                 )
             print(
                 f'Validation:\n'
@@ -209,9 +205,11 @@ def train(helper):
             writer.add_scalar("Val/f1", val_f1, epoch)
             writer.add_figure("results", figure, epoch)
 
-            wandb.log({"Val/loss": val_loss,
-                       "Val/accuracy": val_acc,
-                       "Val/f1": val_f1 })
+            wandb.log({
+                "Val/loss": val_loss,
+                "Val/accuracy": val_acc,
+                "Val/f1": val_f1 
+            })
         model.train()
 
 
@@ -226,8 +224,8 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', type=str, default='MaskBaseDataset', help='dataset transform type (default: MaskBaseDataset)')
     parser.add_argument('--transform', type=str, default=('BaseTransform', 'CustomTransform'), help='data transform type (default: ("BaseTransform", "CustomTransform"))')
     parser.add_argument("--resize", nargs="+", type=list, default=(512, 384), help='resize size for image when training (default: (512, 384))')
-    parser.add_argument('--batch_size', type=int, default=128, help='input batch size for training (default: 128)')
-    parser.add_argument('--val_batch_size', type=int, default=1000, help='input batch size for validation (default: 1000)')
+    parser.add_argument('--batch_size', type=int, default=64, help='input batch size for training (default: 64)')
+    parser.add_argument('--val_batch_size', type=int, default=64, help='input batch size for validation (default: 64)')
     parser.add_argument('--model', type=str, default='ResNet18Pretrained', help='model type (default: ResNet18Pretrained)')
     parser.add_argument('--optimizer', type=str, default='Adam', help='optimizer type (default: Adam)')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate (default: 1e-3)')
