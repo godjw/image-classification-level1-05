@@ -116,12 +116,8 @@ if __name__ == '__main__':
     parser.add_argument('--output_dir', type=str, default=os.environ.get('SM_OUTPUT_DATA_DIR', './output'))
     parser.add_argument('--model_name', type=str, default='best.pt')
 
-    parser.add_argument('--batch_size', type=int, default=1000, help='input batch size for validing (default: 1000)')
-<<<<<<< HEAD
-    parser.add_argument('--resize', type=tuple, default=(256, 192), help='resize size for image when you trained (default: (128, 96))')
-=======
+    parser.add_argument('--batch_size', type=int, default=12, help='input batch size for validing (default: 1000)')
     parser.add_argument('--resize', type=tuple, default=(512, 384), help='resize size for image when you trained (default: (512, 384))')
->>>>>>> 9c78bd5d4392b2ae1086babeff082b457d902563
     parser.add_argument('--mode', type=str, default='all', help='choose all or ensemble')
     args = parser.parse_args()
 
