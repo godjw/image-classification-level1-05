@@ -5,6 +5,7 @@ from importlib import import_module
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from dataset import *
 
@@ -13,7 +14,7 @@ def load_model(model_dir, device, model_name):
     model_path = os.path.join(model_dir, model_name)
     model = torch.load(model_path, map_location=device)
 
-    return model 
+    return model
 
 
 @torch.no_grad()
@@ -25,10 +26,10 @@ def inference(data_dir, model_dir, output_dir, new_dataset):
     model.eval()
 
     if new_dataset:
-        img_root = os.path.join(data_dir, 'new_imgs')
+        img_root = os.path.join(data_dir, "new_imgs")
     else:
-        img_root = os.path.join(data_dir, 'images')
-    info_path = os.path.join(data_dir, 'info.csv')
+        img_root = os.path.join(data_dir, "images")
+    info_path = os.path.join(data_dir, "info.csv")
     info = pd.read_csv(info_path)
 
     img_paths = [os.path.join(img_root, img_id) for img_id in info.ImageID]
@@ -51,9 +52,10 @@ def inference(data_dir, model_dir, output_dir, new_dataset):
             pred = pred.argmax(dim=-1)
             preds.extend(pred.cpu().numpy())
 
-    info['ans'] = preds
-    info.to_csv(os.path.join(output_dir, f'output.csv'), index=False)
-    print(f'Inference Done!')
+    info["ans"] = preds
+    info.to_csv(os.path.join(output_dir, f"{args.name}_output.csv"), index=False)
+    print(f"Inference Done!")
+
 
 @torch.no_grad()
 def inference_with_ensemble(data_dir, model_dir, output_dir):
@@ -67,8 +69,8 @@ def inference_with_ensemble(data_dir, model_dir, output_dir):
     gender_model.eval()
     mask_model.eval()
 
-    img_root = os.path.join(data_dir, 'images')
-    info_path = os.path.join(data_dir, 'info.csv')
+    img_root = os.path.join(data_dir, "images")
+    info_path = os.path.join(data_dir, "info.csv")
     info = pd.read_csv(info_path)
 
     img_paths = [os.path.join(img_root, img_id) for img_id in info.ImageID]
@@ -103,18 +105,19 @@ def inference_with_ensemble(data_dir, model_dir, output_dir):
             
             pred = age_model(images2)
             pred_age = pred.argmax(dim=-1)
-            
+
             pred = gender_model(images)
             pred_gender = pred.argmax(dim=-1)
 
             result = pred_mask * 6 + pred_gender * 3 + pred_age
             preds.extend(result.cpu().numpy())
 
-    info['ans'] = preds
-    info.to_csv(os.path.join(output_dir, f'{args.name}_output.csv'), index=False)
-    print(f'Inference Done!')
+    info["ans"] = preds
+    info.to_csv(os.path.join(output_dir, f"{args.name}_output.csv"), index=False)
+    print(f"Inference Done!")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     # Container environment
@@ -132,7 +135,16 @@ if __name__ == '__main__':
 
     os.makedirs(args.output_dir, exist_ok=True)
 
-    if args.mode == 'all':
-        inference(data_dir=args.data_dir, model_dir=os.path.join(args.model_dir, args.name), output_dir=args.output_dir, new_dataset=args.new_dataset)
-    elif args.mode == 'ensemble':
-        inference_with_ensemble(data_dir=args.data_dir, model_dir=os.path.join(args.model_dir, args.name), output_dir=args.output_dir)
+    if args.mode == "all":
+        inference(
+            data_dir=args.data_dir,
+            model_dir=os.path.join(args.model_dir, args.name),
+            output_dir=args.output_dir,
+            new_dataset=args.new_dataset,
+        )
+    elif args.mode == "ensemble":
+        inference_with_ensemble(
+            data_dir=args.data_dir,
+            model_dir=os.path.join(args.model_dir, args.name),
+            output_dir=args.output_dir,
+        )

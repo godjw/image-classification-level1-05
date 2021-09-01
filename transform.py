@@ -5,8 +5,8 @@ from torchvision.transforms.transforms import ColorJitter
 
 
 
-class AddGaussianNoise():
-    def __init__(self, mean=0., std=1.):
+class AddGaussianNoise:
+    def __init__(self, mean=0.0, std=1.0):
         self.std = std
         self.mean = mean
 
@@ -14,7 +14,7 @@ class AddGaussianNoise():
         return tensor + torch.randn(tensor.size()) * self.std + self.mean
 
     def __repr__(self):
-        return self.__class__.__name__ + f'mean: {self.mean:.2f}, std: {self.std:.2f}'
+        return self.__class__.__name__ + f"mean: {self.mean:.2f}, std: {self.std:.2f}"
 
 
 class BaseTransform:
@@ -52,7 +52,4 @@ class GenderTransform:
 class CustomTransform(BaseTransform):
     def __init__(self, resize, mean, std):
         super().__init__(resize=resize, mean=mean, std=std)
-        self.transforms = [
-            *self.transforms,
-            T.RandomHorizontalFlip(p=0.5)
-        ]
+        self.transforms = [*self.transforms, T.RandomHorizontalFlip(p=0.5)]
