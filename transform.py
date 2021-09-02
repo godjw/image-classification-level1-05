@@ -18,8 +18,9 @@ class AddGaussianNoise:
 class BaseTransform:
     def __init__(self, resize, mean, std):
         self.transforms = [
-            # T.CenterCrop((320, 256)),
+            T.CenterCrop((360, 300)),
             T.Resize(resize, T.InterpolationMode.BICUBIC),
+            
             T.ToTensor(),
             T.Normalize(mean=mean, std=std),
         ]

@@ -42,7 +42,6 @@ class TrainInfo:
     ):
         if random_state:
             random.seed(random_state)
-
         _idxs = set(self.data[crit_col].unique())
         _size = len(_idxs)
         _size_valid = int(_size * val_size)
