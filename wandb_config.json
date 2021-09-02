@@ -1,7 +1,7 @@
 {
     "init" : {
-              "project" : "JunshickCunmixTest",
+              "project" : "JunshickFinal",
               "entity" : "aim5",
-              "name" : "cutmix-notExecuted"
+              "name" : "cutmix-executed"
              }
 }
