@@ -108,17 +108,18 @@ def train(helper):
 
         for idx, (imgs, labels) in enumerate(train_loader):
             imgs = imgs.to(device)
-            labels = labels.to(device)#
+            labels = labels.to(device)
 
             ###cutmix
-            Cutmix = getattr(import_module('cutmix'), 'Cutmix')
-            cutmix = Cutmix(model, criterion, 1, imgs, labels, device)
-            loss, preds = cutmix.start_cutmix()
-
-            ###standard
-            #outs = model(imgs)
-            #preds = torch.argmax(outs, dim=1)
-            #loss = criterion(outs, labels)
+            if args.cutmix:
+                Cutmix = getattr(import_module('cutmix'), 'Cutmix')
+                cutmix = Cutmix(model, criterion, 1, imgs, labels, device)
+                loss, preds = cutmix.start_cutmix()
+            else:
+            ###standard 
+                outs = model(imgs)
+                preds = torch.argmax(outs, dim=1)
+                loss = criterion(outs, labels)
 
             optimizer.zero_grad()
             loss.backward()
@@ -361,6 +362,10 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--dump", type=bool, default=False, help="choose dump or not to save model"
+    )
+
+    parser.add_argument(
+        "--cutmix", type=bool, default=False, help="choose whether to use cutmix or not"
     )
 
     args = parser.parse_args()
