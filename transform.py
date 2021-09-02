@@ -20,6 +20,7 @@ class BaseTransform:
         self.transforms = [
             # T.CenterCrop((320, 256)),
             T.Resize(resize, T.InterpolationMode.BICUBIC),
+            # T.CenterCrop((350, 300)),
             T.ToTensor(),
             T.Normalize(mean=mean, std=std),
         ]

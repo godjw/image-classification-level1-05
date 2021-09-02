@@ -8,6 +8,7 @@ import numpy as np
 import math
 from efficientnet_pytorch import EfficientNet
 
+
 class BaseModel(nn.Module):
     def __init__(self, num_classes, freeze=[]):
         super().__init__()
@@ -56,12 +57,38 @@ class ResNet18Pretrained(nn.Module):
     def forward(self, x):
         return self.net(x)
 
+
 class EfficientNetPretrained(nn.Module):
     def __init__(self, num_classes, freeze=[]):
         super().__init__()
-        self.net = EfficientNet.from_pretrained('efficientnet-b2', num_classes=num_classes)
+        self.net = EfficientNet.from_pretrained(
+            "efficientnet-b2", num_classes=num_classes
+        )
         for layer in freeze:
             getattr(self.net, layer).requires_grad_(False)
-        
+
     def forward(self, x):
         return self.net(x)
+
+
+class ResNet18MSD(nn.Module):
+    def __init__(self, num_classes, freeze=[]):
+        super().__init__()
+        self.net = models.resnet18(pretrained=True)
+        self.net.fc = torch.nn.Linear(in_features=512, out_features=512, bias=True)
+        torch.nn.init.xavier_uniform_(self.net.fc.weight)
+        stdv = 1.0 / math.sqrt(self.net.fc.weight.size(1))
+        self.net.fc.bias.data.uniform_(-stdv, stdv)
+        for layer in freeze:
+            getattr(self.net, layer).requires_grad_(False)
+        self.dropouts = nn.ModuleList([nn.Dropout(0.5) for _ in range(5)])
+        self.linear = nn.Linear(512, num_classes)
+
+    def forward(self, x):
+        x = self.nex(x)
+        for i, dropout in enumerate(self.dropouts):
+            if i == 0:
+                x = self.linear(dropout(x))
+            else:
+                x = x + self.linear(dropout(x))
+        return x / len(self.dropouts)
