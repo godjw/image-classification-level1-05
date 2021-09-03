@@ -195,7 +195,7 @@ def train(helper):
                     preds=val_preds,
                     save_path=os.path.join(
                         save_dir,
-                        f"f1_{args.mode if args.mode else args.model_name}_confusion_matrix.png",
+                        f"acc_{args.mode if args.mode else args.model_name}_confusion_matrix.png",
                     ),
                 )
             # If current f1_score is higher than previous ones than print&update results
@@ -212,7 +212,7 @@ def train(helper):
                     preds=val_preds,
                     save_path=os.path.join(
                         save_dir,
-                        f"acc_{args.mode if args.mode else args.model_name}_confusion_matrix.png",
+                        f"f1_{args.mode if args.mode else args.model_name}_confusion_matrix.png",
                     ),
                 )
             # Print perfomance of validation set
