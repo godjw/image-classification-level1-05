@@ -60,6 +60,6 @@ python inference.py --name exp{number} --model_name {bestf1.pt|best.pt}
 ```
 ensemble model inference의 경우 mode 인자 추가
 ```sh
-python inference.py --mode ensemble --name exp{number} --model_name {bestf1.pt|best.pt}
+python inference.py --mode ensemble --name exp{number}
 ```
 
