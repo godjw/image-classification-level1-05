@@ -1,11 +1,12 @@
 # System Libs.
+import os
 from pathlib import Path
 
 # Other Libs
 import pandas as pd
 
 
-def ensemble_preds(read_paths, save_path, weights=None, return_result=False):
+def ensemble_preds(pred_folder_path, save_path, weights=None, return_result=False):
     """
     Save and get voting result from predictions.
 
@@ -18,6 +19,7 @@ def ensemble_preds(read_paths, save_path, weights=None, return_result=False):
     Returns:
         ensemble_result(pd.DataFrame): Voting result.
     """
+
     def _voting(voting):
         """
         Get voting result with voting weights.
@@ -28,16 +30,20 @@ def ensemble_preds(read_paths, save_path, weights=None, return_result=False):
         Returns:
             result (int): Voting result.
         """
-        result_dict = {pred_value:0 for pred_value in voting.unique()}
+        result_dict = {pred_value: 0 for pred_value in voting.unique()}
         for vote, weight in zip(voting, weights):
             result_dict[vote] += weight
         result = max(result_dict, key=result_dict.get)
         return result
 
-    weights = weights if weights else [1] * len(read_paths)
+
+    pred_folder_path = Path(pred_folder_path)
+    pred_list = os.listdir(pred_folder_path)
+    pred_list = [pred_folder_path.joinpath(f) for f in pred_list if ((f[-4:]=='.csv') & (f[0] != '_'))]
+    weights = weights if weights else [1] * len(pred_list)
 
     preds = []
-    for f in read_paths:
+    for f in pred_list:
         df = (pd.read_csv(f, index_col=0)).astype(int)
         preds.append(df)
     preds = pd.concat(preds, axis=1)
@@ -47,13 +53,22 @@ def ensemble_preds(read_paths, save_path, weights=None, return_result=False):
         ensemble_dict[idx] = _voting(row)
     ensemble_result = (pd.DataFrame(pd.Series(ensemble_dict))).reset_index()
     ensemble_result.columns = [preds.index.name, preds.columns[0]]
-    
+
     ensemble_result.to_csv(save_path, index=False)
-    
+
     if return_result:
         return ensemble_result
 
 
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    prser.add_argument(
+        "
+    )
 
 
-if __name__ == '__main__':
+    helper = settings.SettingsHelper(
+        args=args, device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    )
+
+    ensemble_preds(helper=helper)
