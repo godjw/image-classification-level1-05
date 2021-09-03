@@ -29,8 +29,7 @@ def load_model(model_dir, device, model_name):
 @torch.no_grad()
 def inference(data_dir, model_dir, output_dir, new_dataset):
     r"""
-    Bring 3 model to generate final_reuslt
-    
+
     Args:
         data_dir : evaluate images dir       -> str
         model_dir : saved model dir          -> str
@@ -81,7 +80,7 @@ def inference(data_dir, model_dir, output_dir, new_dataset):
 def inference_with_ensemble(data_dir, model_dir, output_dir, new_dataset):
     r"""
     Bring 3 model to generate final_reuslt
-    
+
     Args:
         data_dir : evaluate images dir       -> str
         model_dir : saved model dir          -> str
@@ -148,18 +147,25 @@ if __name__ == "__main__":
 
     # Container environment
     parser.add_argument(
-        "--data_dir", type=str, default=os.environ.get("SM_CHANNEL_EVAL", "/opt/ml/input/data/eval"),
+        "--data_dir",
+        type=str,
+        default=os.environ.get("SM_CHANNEL_EVAL", "/opt/ml/input/data/eval"),
     )
     parser.add_argument("--new_dataset", type=bool, default=False)
     parser.add_argument("--model_dir", type=str, default=os.environ.get("SM_CHANNEL_MODEL", "./model"))
     parser.add_argument("--name", type=str, default="exp")
     parser.add_argument(
-        "--output_dir", type=str, default=os.environ.get("SM_OUTPUT_DATA_DIR", "./output"),
+        "--output_dir",
+        type=str,
+        default=os.environ.get("SM_OUTPUT_DATA_DIR", "./output"),
     )
     parser.add_argument("--model_name", type=str, default="best.pt")
 
     parser.add_argument(
-        "--batch_size", type=int, default=1000, help="input batch size for validing (default: 1000)",
+        "--batch_size",
+        type=int,
+        default=1000,
+        help="input batch size for validing (default: 1000)",
     )
     parser.add_argument(
         "--resize",
