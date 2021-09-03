@@ -38,16 +38,8 @@ def train(helper):
     num_classes = valid_set.num_classes
 
     Transforms = list(map(lambda trf: getattr(import_module("transform"), trf), args.transform))
-    val_transform = Transforms[0](
-        resize=args.resize,
-        mean=train_set.mean,
-        std=train_set.std,
-    )
-    train_transform = Transforms[1](
-        resize=args.resize,
-        mean=train_set.mean,
-        std=train_set.std,
-    )
+    val_transform = Transforms[0](resize=args.resize, mean=train_set.mean, std=train_set.std,)
+    train_transform = Transforms[1](resize=args.resize, mean=train_set.mean, std=train_set.std,)
     train_set.set_transform(train_transform)
     valid_set.set_transform(val_transform)
     train_loader = DataLoader(
@@ -74,9 +66,7 @@ def train(helper):
     criterion = get_criterion(args.criterion)
     Optimizer = getattr(import_module("torch.optim"), args.optimizer)
     optimizer = Optimizer(
-        filter(lambda p: p.requires_grad, model.parameters()),
-        lr=args.lr,
-        weight_decay=5e-4,
+        filter(lambda p: p.requires_grad, model.parameters()), lr=args.lr, weight_decay=5e-4,
     )
     scheduler = StepLR(optimizer, args.lr_decay_step, gamma=0.5)
     save_dir = helper.get_save_dir(dump=args.dump)
@@ -130,11 +120,7 @@ def train(helper):
                     f"training accuracy: {train_acc:>3.2%}\ttraining loss: {train_loss:>4.4f}\ttraining f1: {train_f1:>4.4f}\tlearning rate: {current_lr}\n"
                 )
                 wandb.log(
-                    {
-                        "Train/loss": train_loss,
-                        "Train/accuracy": train_acc,
-                        "Train/f1": train_f1,
-                    }
+                    {"Train/loss": train_loss, "Train/accuracy": train_acc, "Train/f1": train_f1,}
                 )
                 loss_value = 0
                 matches = 0
@@ -174,8 +160,7 @@ def train(helper):
             if val_acc > best_val_acc:
                 print(f"New best model for val accuracy : {val_acc:3.2%}! saving the best model..")
                 torch.save(
-                    model,
-                    os.path.join(save_dir, f"{args.mode if args.mode else args.model_name}.pt"),
+                    model, os.path.join(save_dir, f"{args.mode if args.mode else args.model_name}.pt"),
                 )
                 best_val_acc = val_acc
                 logger.save_confusion_matrix(
@@ -183,15 +168,13 @@ def train(helper):
                     labels=val_labels,
                     preds=val_preds,
                     save_path=os.path.join(
-                        save_dir,
-                        f"f1_{args.mode if args.mode else args.model_name}_confusion_matrix.png",
+                        save_dir, f"f1_{args.mode if args.mode else args.model_name}_confusion_matrix.png",
                     ),
                 )
             if val_f1 > best_f1:
                 print(f"New best model for f1 : {val_f1:3.2f}! saving the best model..")
                 torch.save(
-                    model,
-                    os.path.join(save_dir, f"{args.mode if args.mode else args.model_name}f1.pt"),
+                    model, os.path.join(save_dir, f"{args.mode if args.mode else args.model_name}f1.pt"),
                 )
                 best_f1 = val_f1
                 logger.save_confusion_matrix(
@@ -199,8 +182,7 @@ def train(helper):
                     labels=val_labels,
                     preds=val_preds,
                     save_path=os.path.join(
-                        save_dir,
-                        f"acc_{args.mode if args.mode else args.model_name}_confusion_matrix.png",
+                        save_dir, f"acc_{args.mode if args.mode else args.model_name}_confusion_matrix.png",
                     ),
                 )
             print(
@@ -216,9 +198,7 @@ def train(helper):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--data_dir",
-        type=str,
-        default=os.environ.get("SM_CHANNEL_TRAIN", "/opt/ml/input/data/train/images"),
+        "--data_dir", type=str, default=os.environ.get("SM_CHANNEL_TRAIN", "/opt/ml/input/data/train/images"),
     )
     parser.add_argument("--model_dir", type=str, default=os.environ.get("SM_MODEL_DIR", "./model"))
     parser.add_argument("--file_dir", type=str, default="")
@@ -245,42 +225,24 @@ if __name__ == "__main__":
         help="resize size for image when training (default: (512, 384))",
     )
     parser.add_argument(
-        "--batch_size",
-        type=int,
-        default=64,
-        help="input batch size for training (default: 64)",
+        "--batch_size", type=int, default=64, help="input batch size for training (default: 64)",
     )
     parser.add_argument(
-        "--val_batch_size",
-        type=int,
-        default=64,
-        help="input batch size for validation (default: 64)",
+        "--val_batch_size", type=int, default=64, help="input batch size for validation (default: 64)",
     )
     parser.add_argument(
-        "--model",
-        type=str,
-        default="ResNet18Pretrained",
-        help="model type (default: ResNet18Pretrained)",
+        "--model", type=str, default="ResNet18Pretrained", help="model type (default: ResNet18Pretrained)",
     )
     parser.add_argument("--optimizer", type=str, default="Adam", help="optimizer type (default: Adam)")
     parser.add_argument("--lr", type=float, default=1e-3, help="learning rate (default: 1e-2)")
     parser.add_argument(
-        "--val_ratio",
-        type=float,
-        default=0.2,
-        help="ratio for validaton (default: 0.2)",
+        "--val_ratio", type=float, default=0.2, help="ratio for validaton (default: 0.2)",
     )
     parser.add_argument(
-        "--criterion",
-        type=str,
-        default="cross_entropy",
-        help="criterion type (default: cross_entropy)",
+        "--criterion", type=str, default="cross_entropy", help="criterion type (default: cross_entropy)",
     )
     parser.add_argument(
-        "--lr_decay_step",
-        type=int,
-        default=20,
-        help="learning rate scheduler deacy step (default: 20)",
+        "--lr_decay_step", type=int, default=20, help="learning rate scheduler deacy step (default: 20)",
     )
     parser.add_argument(
         "--log_interval",
