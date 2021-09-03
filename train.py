@@ -29,12 +29,6 @@ def train(helper):
     DataInfo = getattr(import_module("dataset"), "TrainInfo")
     data_info = DataInfo(file_dir=args.file_dir, data_dir=args.data_dir, new_dataset=args.new_dataset)
     train_df, valid_df, dist_df = data_info.split_dataset(args.val_ratio)
-
-    age = valid_df.age
-    age_filter_1 = ~((55 <= age) & (age < 60))
-    age_filter_2 = ~((30 <= age) & (age < 40))
-    age_filter = age_filter_1 # & age_filter_2
-    valid_df = valid_df.loc[age_filter, :]
     
     mean = (0.56019358, 0.52410121, 0.501457)
     std = (0.23318603, 0.24300033, 0.24567522)
