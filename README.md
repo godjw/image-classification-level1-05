@@ -13,8 +13,10 @@ wandb_config.json에서 project와 name value 값을 자유로이 지정
 ---
 
 ## Installation
-
----
+"""
+pip install upgrade torchvision
+pip install wandb
+sudo apt-get install libgl1-mesa-glx
 
 ## how to train model 
 
