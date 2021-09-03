@@ -2,6 +2,18 @@ import numpy as np
 import torch
 
 class Cutmix():
+    r""" Applies Cutmix transformation for each generated batch
+    
+    Args: 
+        model: model instance
+        criterion: loss function instance
+        beta: beta value of Beta distribution
+        images: incoming images with tensor format
+        labels: labels that corresponds with images
+
+    
+ 
+    """
 
     def __init__(self, model, criterion, beta, images, labels, device):
         self.model = model
