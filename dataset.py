@@ -6,7 +6,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-import torch
 from torch.utils.data import Dataset
 from PIL import Image
 from tqdm import tqdm
@@ -21,10 +20,9 @@ class TrainInfo:
         data_dir="/opt/ml/input/data/train/images",
         new_dataset=False,
     ):
-        self.data = pd.read_csv(file_dir) if file_dir else pd.read_csv("processed_train.csv")
+        self.data = pd.read_csv(file_dir) if file_dir else pd.read_csv("metadata/processed_train.csv")
         self.data_dir = Path(data_dir)
 
-        # self.data = self.data.query('(age <= 20) | (age >=35 & age <= 45) | (age >= 60)')
         if new_dataset == False:
             self.update_data_dir()
 
@@ -48,7 +46,8 @@ class TrainInfo:
 
         train_idxs = _idxs - valid_idxs
         train_df = self.data.loc[self.data[crit_col].isin(train_idxs)]
-        # train_df = train_df.query("(age <= 20) | (age >=30 & age <= 50) | (age >= 60)")
+        # age offset
+        train_df = train_df.query("(age <= 25) | (age >=30 & age <= 58) | (age >= 60)")
 
         split_result = dict(origin=self.data, train=train_df, valid=valid_df)
         split_result = self._split_result(split_result)

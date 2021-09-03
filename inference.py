@@ -4,10 +4,9 @@ from importlib import import_module
 
 import pandas as pd
 import torch
-from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from dataset import MaskBaseDataset, TestDataset
+from dataset import TestDataset
 
 
 def load_model(model_dir, device):
@@ -37,7 +36,7 @@ def inference(data_dir, model_dir, output_dir, new_dataset):
     loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=args.batch_size,
-        # num_workers=2,
+        num_workers=2,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=False,
@@ -117,9 +116,7 @@ if __name__ == "__main__":
         default=os.environ.get("SM_CHANNEL_EVAL", "/opt/ml/input/data/eval"),
     )
     parser.add_argument("--new_dataset", type=bool, default=False)
-    parser.add_argument(
-        "--model_dir", type=str, default=os.environ.get("SM_CHANNEL_MODEL", "./model")
-    )
+    parser.add_argument("--model_dir", type=str, default=os.environ.get("SM_CHANNEL_MODEL", "./model"))
     parser.add_argument("--name", type=str, default="exp")
     parser.add_argument(
         "--output_dir",
@@ -140,9 +137,7 @@ if __name__ == "__main__":
         default=(512, 384),
         help="resize size for image when you trained (default: (512, 384))",
     )
-    parser.add_argument(
-        "--mode", type=str, default="all", help="choose all or ensemble"
-    )
+    parser.add_argument("--mode", type=str, default="all", help="choose all or ensemble")
     args = parser.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)

@@ -7,11 +7,8 @@ from importlib import import_module
 import torch
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import f1_score
-from torchvision import models
 
-import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 
@@ -35,6 +32,7 @@ def train(helper):
     mean = (0.56019358, 0.52410121, 0.501457)
     std = (0.23318603, 0.24300033, 0.24567522)
     Dataset = getattr(import_module("dataset"), args.dataset)
+    data_set = Dataset(data_info.data, mean=mean, std=std, label_col="Class" + args.mode.capitalize())
     train_set = Dataset(train_df, mean=mean, std=std, label_col="Class" + args.mode.capitalize())
     valid_set = Dataset(valid_df, mean=mean, std=std, label_col="Class" + args.mode.capitalize())
     num_classes = valid_set.num_classes
@@ -55,7 +53,7 @@ def train(helper):
     train_loader = DataLoader(
         train_set,
         batch_size=args.batch_size,
-        num_workers=multiprocessing.cpu_count() // 2,
+        num_workers=multiprocessing.cpu_count(),
         shuffle=True,
         pin_memory=is_cuda,
         drop_last=True,
@@ -63,8 +61,8 @@ def train(helper):
 
     valid_loader = DataLoader(
         valid_set,
-        batch_size=args.val_batch_size,
-        num_workers=multiprocessing.cpu_count() // 2,
+        batch_size=args.batch_size,
+        num_workers=multiprocessing.cpu_count(),
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=True,
@@ -81,10 +79,8 @@ def train(helper):
         weight_decay=5e-4,
     )
     scheduler = StepLR(optimizer, args.lr_decay_step, gamma=0.5)
-
     save_dir = helper.get_save_dir(dump=args.dump)
 
-    writer = SummaryWriter(log_dir=save_dir)
     with open(os.path.join(save_dir, f"{args.mode}.json"), "w", encoding="utf-8") as f:
         json.dump(vars(args), f, ensure_ascii=False, indent=4)
 
@@ -126,9 +122,6 @@ def train(helper):
                     f"[{idx + 1:0{len(str(len(train_loader)))}d}/{len(train_loader)}]\n"
                     f"training accuracy: {train_acc:>3.2%}\ttraining loss: {train_loss:>4.4f}\ttraining f1: {train_f1:>4.4f}\tlearning rate: {current_lr}\n"
                 )
-                writer.add_scalar("Train/loss", train_loss, epoch * len(train_loader) + idx)
-                writer.add_scalar("Train/accuracy", train_acc, epoch * len(train_loader) + idx)
-                writer.add_scalar("Train/f1", train_f1, epoch * len(train_loader) + idx)
                 wandb.log(
                     {
                         "Train/loss": train_loss,
@@ -138,7 +131,6 @@ def train(helper):
                 )
                 loss_value = 0
                 matches = 0
-        # optimizer.step()
         scheduler.step()
 
         model.eval()
@@ -149,7 +141,6 @@ def train(helper):
 
             val_labels = []
             val_preds = []
-            figure = None
             for val_batch in tqdm(valid_loader, colour="GREEN"):
                 inputs, labels = val_batch
                 val_labels.extend(map(torch.Tensor.item, labels))
@@ -167,21 +158,6 @@ def train(helper):
                 val_loss_items.append(loss_item)
                 val_acc_items.append(acc_item)
                 val_f1_items.append(f1_item)
-
-                # if figure is None:
-                #     imgs = (
-                #         torch.clone(inputs).detach().cpu().permute(0, 2, 3, 1).numpy()
-                #     )
-                #     imgs = train_set.denormalize_image(
-                #         imgs, train_set.mean, train_set.std
-                #     )
-                #     figure = logger.grid_image(
-                #         imgs=imgs,
-                #         labels=labels,
-                #         preds=preds,
-                #         n=16,
-                #         shuffle=args.dataset != "MaskSplitByProfileDataset",
-                #     )
 
             val_loss = np.sum(val_loss_items) / len(valid_loader)
             val_acc = np.sum(val_acc_items) / len(valid_set)
@@ -225,10 +201,6 @@ def train(helper):
                 f"accuracy: {val_acc:>3.2%}\tloss: {val_loss:>4.2f}\tf1: {val_f1:>4.2f}\n"
                 f"best acc : {best_val_acc:>3.2%}\tbest loss: {best_val_loss:>4.2f}\n"
             )
-            writer.add_scalar("Val/loss", val_loss, epoch)
-            writer.add_scalar("Val/accuracy", val_acc, epoch)
-            writer.add_scalar("Val/f1", val_f1, epoch)
-            # writer.add_figure("results", figure, epoch)
 
             wandb.log({"Val/loss": val_loss, "Val/accuracy": val_acc, "Val/f1": val_f1})
         model.train()
