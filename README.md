@@ -2,14 +2,16 @@
 
 ## Wandb Login
 
-1. wandb_login.py 실행 
+1. wandb_setting/wandb_login.py 실행 
 2. Wandb Login 
 3. Wandb에서 제공하는 API key  입력
-- wandb_config.josn 에서 project와 name value 값을 자유롭게 지정
+- wandb_setting/wandb_config.josn 에서 project와 name value 값을 자유롭게 지정
 
 ## Installation
 
 ```sh
+wget https://aistages-prod-server-public.s3.amazonaws.com/app/Competitions/000074/data/train.tar.gz
+tar -zxvf train.tar.gz
 pip3 install -r requirements.txt
 pip3 install upgrade torchvision
 pip3 install wandb
