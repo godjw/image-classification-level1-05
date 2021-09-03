@@ -10,7 +10,7 @@ import numpy as np
 
 
 class SettingsHelper:
-    '''
+    """
     Helper class that helps to set the enviornment.
     By default, it fixes random seed to a user defined value and chooses
     which device to use for calculation.
@@ -18,7 +18,8 @@ class SettingsHelper:
     Args:
         args (argparse.Namespace): Input arguments
         device (torch.device): Device to use
-    '''
+    """
+
     def __init__(self, args, device=torch.device("cuda")):
         self.args = args
         self.device = device
