@@ -2,6 +2,16 @@ import numpy as np
 import torch
 
 class Cutmix():
+    """ 
+    Applies Cutmix transformation for each generated batch
+    
+    Args: 
+        model: model instance
+        criterion: loss function instance
+        beta: beta value of Beta distribution
+        images: incoming images with tensor format
+        labels: labels that corresponds with images
+    """
 
     def __init__(self, model, criterion, beta, images, labels, device):
         self.model = model
@@ -15,7 +25,9 @@ class Cutmix():
         self.matches = None
 
     def start_cutmix(self):
-        #and np.random.random()
+        """
+        returns loss and prediction of each 'cut mixed' image
+        """
         if self.beta>0 and np.random.random()>=0.5: #cutmix executed
             
             lamb = np.random.beta(self.beta, self.beta)
@@ -24,7 +36,8 @@ class Cutmix():
             target_a = self.labels #original label
             target_b = self.labels[rand_index] #patch label
 
-            bbx1, bby1, bbx2, bby2 = self.rand_bbox(self.images.size(), lamb)
+            #get random generated box points (x1,y1), (x2,y2)
+            bbx1, bby1, bbx2, bby2 = self.rand_bbox(self.images.size(), lamb) 
             self.images[:, :, bbx1:bbx2, bby1:bby2] = self.images[rand_index, :, bbx1:bbx2, bby1:bby2] #image 
     
             lamb = 1-((bbx2-bbx1) * (bby2-bby1)/(self.images.size()[-1]*self.images.size()[-2]))
@@ -39,22 +52,32 @@ class Cutmix():
 
         self.preds = torch.argmax(outputs, dim=1)
    
-        return self.loss, self.preds, #self.matches
+        return self.loss, self.preds, 
 
     def rand_bbox(self, size, lam): #size: [Batch_size, Channel, Width, Height]
+
+        """
+        - returns (x1,y1) (x2,y2) from original image size.
+        - each points are randomly generated.
+        - generated points implies patchbox size which will be mixed with original image
+
+        Args:
+            size: size of the image
+            lam: lambda value of randomly generated data by Beta distribution
+        """
 
         W=size[2]
         H=size[3]
 
-        cut_rat = np.sqrt(1. -lam) #패치크기 비율로써 생성
-        cut_w = np.int(W*cut_rat)
+        cut_rat = np.sqrt(1. -lam) #get ratio
+        cut_w = np.int(W*cut_rat) 
         cut_h = np.int(H*cut_rat)
 
-        #패치의 중앙 좌표값 cx, cy
+        #Center coordinate values
         cx = np.random.randint(W)
         cy = np.random.randint(H)
 
-        #패치 모서리의 좌표값
+        #Edges of genderated patch
         bbx1 = 0
         bby1 = np.clip(cy-cut_h//2,0,H)
         bbx2 = W

@@ -1,26 +1,20 @@
-import torch
-
 from torchvision import transforms as T
 
 
-class AddGaussianNoise:
-    def __init__(self, mean=0.0, std=1.0):
-        self.std = std
-        self.mean = mean
-
-    def __call__(self, tensor):
-        return tensor + torch.randn(tensor.size()) * self.std + self.mean
-
-    def __repr__(self):
-        return self.__class__.__name__ + f"mean: {self.mean:.2f}, std: {self.std:.2f}"
-
-
 class BaseTransform:
+    """
+    Base tranform class that apllies to validation dataset.
+    It contains [Resize, ToTensor, Normalize] by default.
+
+    Args:
+        resize (sequence): Size that an image is resized to
+        mean (sequence): Sequence of means for each channel
+        std (sequence): Sequence of standard deviations for each channel
+    """
+
     def __init__(self, resize, mean, std):
         self.transforms = [
-            T.CenterCrop((360, 300)),
             T.Resize(resize, T.InterpolationMode.BICUBIC),
-            
             T.ToTensor(),
             T.Normalize(mean=mean, std=std),
         ]
@@ -30,6 +24,16 @@ class BaseTransform:
 
 
 class CustomTransform(BaseTransform):
+    """
+    Custom tranform class that apllies to train dataset.
+    It contains [BaseTransform, RandomHorizontalFlip(p=0.5)] by default.
+
+    Args:
+        resize (sequence): Size that an image is resized to
+        mean (sequence): Sequence of means for each channel
+        std (sequence): Sequence of standard deviations for each channel
+    """
+
     def __init__(self, resize, mean, std):
         super().__init__(resize=resize, mean=mean, std=std)
         self.transforms = [*self.transforms, T.RandomHorizontalFlip(p=0.5)]

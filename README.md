@@ -11,9 +11,10 @@
 
 ```sh
 pip3 install -r requirements.txt
+pip3 install upgrade torchvision
+pip3 install wandb
+sudo apt-get install libgl1-mesa-glx
 ```
-
-
 ## how to train model 
 
 환경변수 SM_CHANNEL_TRAIN 에 train dataset images 경로 설정
