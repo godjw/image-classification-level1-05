@@ -6,7 +6,6 @@ wandb/
 train/
 eval/
 *.gz
-*.json
 ._train
 output/
 wandb/
