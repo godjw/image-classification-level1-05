@@ -88,6 +88,14 @@ def train(helper):
     best_f1 = 0
 
     for epoch in range(1, args.epochs + 1):
+        """
+        Start training
+        - For each epoch, when training is done, execute evaluation with validation set.
+        - When the --cutmix argument is set 'true' then returns cutmix calculated
+          prediction and loss value
+        - Prints each performace of train/validation
+        - W&B is used to share process and results to all team members.
+        """
         loss_value = 0
         matches = 0
         accumulated_f1 = 0
@@ -97,13 +105,11 @@ def train(helper):
             imgs = imgs.to(device)
             labels = labels.to(device)
 
-            ###cutmix
-            if args.cutmix:
+            if args.cutmix:  # cutmix
                 Cutmix = getattr(import_module("cutmix"), "Cutmix")
                 cutmix = Cutmix(model, criterion, 1, imgs, labels, device)
                 loss, preds = cutmix.start_cutmix()
-            else:
-                ###standard
+            else:  # standard
                 outs = model(imgs)
                 preds = torch.argmax(outs, dim=1)
                 loss = criterion(outs, labels)
@@ -117,17 +123,20 @@ def train(helper):
             accumulated_f1 += f1_score(labels.cpu().numpy(), preds.cpu().numpy(), average="macro")
             iter_count += 1
 
+            # Execute logging
             if (idx + 1) % args.log_interval == 0:
                 train_loss = loss_value / args.log_interval
                 train_acc = matches / args.log_interval
                 train_f1 = accumulated_f1 / iter_count
                 current_lr = logger.get_lr(optimizer)
 
+                # print train loss
                 print(
                     f"Epoch: {epoch:0{len(str(args.epochs))}d}/{args.epochs} "
                     f"[{idx + 1:0{len(str(len(train_loader)))}d}/{len(train_loader)}]\n"
                     f"training accuracy: {train_acc:>3.2%}\ttraining loss: {train_loss:>4.4f}\ttraining f1: {train_f1:>4.4f}\tlearning rate: {current_lr}\n"
                 )
+                # Save logs at W&B
                 wandb.log(
                     {
                         "Train/loss": train_loss,
@@ -137,8 +146,11 @@ def train(helper):
                 )
                 loss_value = 0
                 matches = 0
+
+        # Step scheduler
         scheduler.step()
 
+        # Change to evaluation mode
         model.eval()
         with torch.no_grad():
             val_loss_items = []
@@ -170,6 +182,7 @@ def train(helper):
             val_f1 = np.average(val_f1_items)
             best_val_loss = min(best_val_loss, val_loss)
 
+            # If current accuracy is higher than previous ones than print&update results
             if val_acc > best_val_acc:
                 print(f"New best model for val accuracy : {val_acc:3.2%}! saving the best model..")
                 torch.save(
@@ -186,6 +199,7 @@ def train(helper):
                         f"f1_{args.mode if args.mode else args.model_name}_confusion_matrix.png",
                     ),
                 )
+            # If current f1_score is higher than previous ones than print&update results
             if val_f1 > best_f1:
                 print(f"New best model for f1 : {val_f1:3.2f}! saving the best model..")
                 torch.save(
@@ -202,12 +216,13 @@ def train(helper):
                         f"acc_{args.mode if args.mode else args.model_name}_confusion_matrix.png",
                     ),
                 )
+            # Print perfomance of validation set
             print(
                 f"Validation:\n"
                 f"accuracy: {val_acc:>3.2%}\tloss: {val_loss:>4.2f}\tf1: {val_f1:>4.2f}\n"
                 f"best acc : {best_val_acc:>3.2%}\tbest loss: {best_val_loss:>4.2f}\tbest f1: {best_f1:>3.2f}\n"
             )
-
+            # Save log at W&B
             wandb.log({"Val/loss": val_loss, "Val/accuracy": val_acc, "Val/f1": val_f1})
         model.train()
 
@@ -297,6 +312,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    """
+    Initalize W&B
+    """
     wandb_file = json.load(open("wandb_config.json"))
     project, entity, name = wandb_file["init"].values()
     wandb.init(project=project, entity=entity, name=name, config=args)  # wandb 초기화
