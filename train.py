@@ -98,9 +98,16 @@ def train(helper):
             imgs = imgs.to(device)
             labels = labels.to(device)
 
-            outs = model(imgs)
-            preds = torch.argmax(outs, dim=1)
-            loss = criterion(outs, labels)
+            ###cutmix
+            if args.cutmix:
+                Cutmix = getattr(import_module("cutmix"), "Cutmix")
+                cutmix = Cutmix(model, criterion, 1, imgs, labels, device)
+                loss, preds = cutmix.start_cutmix()
+            else:
+                ###standard
+                outs = model(imgs)
+                preds = torch.argmax(outs, dim=1)
+                loss = criterion(outs, labels)
 
             optimizer.zero_grad()
             loss.backward()
@@ -199,7 +206,7 @@ def train(helper):
             print(
                 f"Validation:\n"
                 f"accuracy: {val_acc:>3.2%}\tloss: {val_loss:>4.2f}\tf1: {val_f1:>4.2f}\n"
-                f"best acc : {best_val_acc:>3.2%}\tbest loss: {best_val_loss:>4.2f}\n"
+                f"best acc : {best_val_acc:>3.2%}\tbest loss: {best_val_loss:>4.2f}\tbest f1: {best_f1:>3.2f}\n"
             )
 
             wandb.log({"Val/loss": val_loss, "Val/accuracy": val_acc, "Val/f1": val_f1})
@@ -256,7 +263,7 @@ if __name__ == "__main__":
         help="model type (default: ResNet18Pretrained)",
     )
     parser.add_argument("--optimizer", type=str, default="Adam", help="optimizer type (default: Adam)")
-    parser.add_argument("--lr", type=float, default=1e-3, help="learning rate (default: 1e-3)")
+    parser.add_argument("--lr", type=float, default=1e-3, help="learning rate (default: 1e-2)")
     parser.add_argument(
         "--val_ratio",
         type=float,
@@ -286,6 +293,8 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", type=str, default="best", help="custom model name")
     parser.add_argument("--freeze", nargs="+", default=[], help="layers to freeze (default: [])")
     parser.add_argument("--dump", type=bool, default=False, help="choose dump or not to save model")
+
+    parser.add_argument("--cutmix", type=bool, default=False, help="choose whether to use cutmix or not")
 
     args = parser.parse_args()
 
