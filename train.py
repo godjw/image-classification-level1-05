@@ -20,7 +20,6 @@ import wandb
 
 
 def train(helper):
-
     args = helper.args
     device = helper.device
     is_cuda = helper.device == torch.device("cuda")
