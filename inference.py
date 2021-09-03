@@ -10,6 +10,7 @@ from dataset import TestDataset
 
 from tqdm import tqdm
 
+
 def load_model(model_dir, device, model_name):
     r"""
     Bring your saved model
@@ -93,9 +94,9 @@ def inference_with_ensemble(data_dir, model_dir, output_dir, new_dataset):
     device = torch.device("cuda" if is_cuda else "cpu")
 
     # if your model name is not {mode}f1.pt than modify below code
-    age_model = load_model(model_dir, device, 'agef1.pt').to(device)
-    gender_model = load_model(model_dir, device, 'genderf1.pt').to(device)
-    mask_model  = load_model(model_dir, device, 'maskf1.pt').to(device)
+    age_model = load_model(model_dir, device, "agef1.pt").to(device)
+    gender_model = load_model(model_dir, device, "genderf1.pt").to(device)
+    mask_model = load_model(model_dir, device, "maskf1.pt").to(device)
 
     age_model.eval()
     gender_model.eval()
@@ -127,7 +128,7 @@ def inference_with_ensemble(data_dir, model_dir, output_dir, new_dataset):
 
             pred = mask_model(images)
             pred_mask = pred.argmax(dim=-1)
-            
+
             pred = age_model(images)
             pred_age = pred.argmax(dim=-1)
 
@@ -137,8 +138,6 @@ def inference_with_ensemble(data_dir, model_dir, output_dir, new_dataset):
             result = pred_mask * 6 + pred_gender * 3 + pred_age
             preds.extend(result.cpu().numpy())
 
-
-            
     info["ans"] = preds
     info.to_csv(os.path.join(output_dir, f"{args.name}_output.csv"), index=False)
     print(f"Inference Done!")
@@ -149,25 +148,18 @@ if __name__ == "__main__":
 
     # Container environment
     parser.add_argument(
-        "--data_dir",
-        type=str,
-        default=os.environ.get("SM_CHANNEL_EVAL", "/opt/ml/input/data/eval"),
+        "--data_dir", type=str, default=os.environ.get("SM_CHANNEL_EVAL", "/opt/ml/input/data/eval"),
     )
     parser.add_argument("--new_dataset", type=bool, default=False)
     parser.add_argument("--model_dir", type=str, default=os.environ.get("SM_CHANNEL_MODEL", "./model"))
     parser.add_argument("--name", type=str, default="exp")
     parser.add_argument(
-        "--output_dir",
-        type=str,
-        default=os.environ.get("SM_OUTPUT_DATA_DIR", "./output"),
+        "--output_dir", type=str, default=os.environ.get("SM_OUTPUT_DATA_DIR", "./output"),
     )
     parser.add_argument("--model_name", type=str, default="best.pt")
 
     parser.add_argument(
-        "--batch_size",
-        type=int,
-        default=1000,
-        help="input batch size for validing (default: 1000)",
+        "--batch_size", type=int, default=1000, help="input batch size for validing (default: 1000)",
     )
     parser.add_argument(
         "--resize",
