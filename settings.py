@@ -10,6 +10,15 @@ import numpy as np
 
 
 class SettingsHelper:
+    '''
+    Helper class that helps to set the enviornment.
+    By default, it fixes random seed to a user defined value and chooses
+    which device to use for calculation.
+
+    Args:
+        args (argparse.Namespace): Input arguments
+        device (torch.device): Device to use
+    '''
     def __init__(self, args, device=torch.device("cuda")):
         self.args = args
         self.device = device
@@ -18,7 +27,7 @@ class SettingsHelper:
     def _set_seed(self, seed):
         torch.manual_seed(seed)
         torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)  # multi-GPU
+        torch.cuda.manual_seed_all(seed)
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         np.random.seed(seed)
