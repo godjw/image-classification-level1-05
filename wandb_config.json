@@ -1,7 +1,7 @@
 {
-    "init" : {
-              "project" : "JunshickFinal",
-              "entity" : "aim5",
-              "name" : "exp28"
-             }
+    "init": {
+        "project": "JunshickFinal",
+        "entity": "aim5",
+        "name": "exp28"
+    }
 }
