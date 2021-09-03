@@ -81,6 +81,7 @@ def train(helper):
     scheduler = StepLR(optimizer, args.lr_decay_step, gamma=0.5)
     save_dir = helper.get_save_dir(dump=args.dump)
 
+    
     with open(os.path.join(save_dir, f"{args.mode}.json"), "w", encoding="utf-8") as f:
         json.dump(vars(args), f, ensure_ascii=False, indent=4)
 

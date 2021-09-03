@@ -5,6 +5,13 @@ import torch.nn.functional as F
 
 # https://discuss.pytorch.org/t/is-this-a-correct-implementation-for-focal-loss-in-pytorch/43327/8
 class FocalLoss(nn.Module):
+    """
+    FocalLoss
+    
+    Args:
+        gamma (float) : How big the loss that don't fig well
+        reduction : If it is NONE, it has the same shape as y_true otherwise, it is scalar
+    """
     def __init__(self, weight=None, gamma=2.0, reduction="mean"):
         super().__init__()
         self.weight = weight
@@ -23,6 +30,13 @@ class FocalLoss(nn.Module):
 
 
 class LabelSmoothingLoss(nn.Module):
+    """
+    LabelSmoothingLoss
+    
+    Args:
+        classes : how many output classes
+        smoothing : how much smooth label 
+    """
     def __init__(self, classes=3, smoothing=0.0, dim=-1):
         super().__init__()
         self.confidence = 1.0 - smoothing
@@ -41,6 +55,13 @@ class LabelSmoothingLoss(nn.Module):
 
 # https://gist.github.com/SuperShinyEyes/dcc68a08ff8b615442e3bc6a9b55a354
 class F1Loss(nn.Module):
+    """
+    LabelSmoothingLoss
+    
+    Args:
+        classes : how many output classes
+        epsilon : prevent division by zero 
+    """
     def __init__(self, classes=18, epsilon=1e-7):
         super().__init__()
         self.classes = classes
@@ -74,6 +95,13 @@ _criterion_entrypoints = {
 
 
 def get_criterion(criterion_name, **kwargs):
+    """
+    Select criterion and bring class
+
+    args
+        criterion_name : name of criterion
+        **kwargs : other required argument
+    """
     if criterion_name in _criterion_entrypoints:
         create_fn = _criterion_entrypoints[criterion_name]
         criterion = create_fn(**kwargs)
