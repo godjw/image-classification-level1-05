@@ -35,6 +35,13 @@ class SettingsHelper:
         random.seed(seed)
 
     def get_save_dir(self, dump=False):
+        """
+        A function that returns the path where models, logs, etc will be saved.
+        If the directory sent along arguments already exists and dump=True,
+        it dumps newly generated files over existing files.
+        If dump=False, it automatically generates a new directory which has a name
+        that the postfix number is increased by 1.
+        """
         save_dir = Path(os.path.join(self.args.model_dir, self.args.name))
         if not save_dir.exists() or dump:
             return str(save_dir)
