@@ -5,7 +5,19 @@ from pathlib import Path
 import pandas as pd
 
 
-def ensemble_preds(read_paths, save_path, weights=None):
+def ensemble_preds(read_paths, save_path, weights=None, return_result=False):
+    """
+    Save and get voting result from predictions.
+
+    Args:
+        read_paths (list): Prediction csv file list.
+        save_path (str or pathlib.Path): Voting result save path.
+        weights (sequence): Weight for each prediction. Defaults to None.
+        return_result (bool): Wheter return voting result.
+
+    Returns:
+        ensemble_result(pd.DataFrame): Voting result.
+    """
     def _voting(voting):
         """
         Get voting result with voting weights.
@@ -37,7 +49,9 @@ def ensemble_preds(read_paths, save_path, weights=None):
     ensemble_result.columns = [preds.index.name, preds.columns[0]]
     
     ensemble_result.to_csv(save_path, index=False)
-    return ensemble_result
+    
+    if return_result:
+        return ensemble_result
 
 
 
