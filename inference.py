@@ -63,8 +63,9 @@ def inference_with_ensemble(data_dir, model_dir, output_dir):
     device = torch.device("cuda" if is_cuda else "cpu")
 
     age_model = load_model(model_dir, device, 'agef1.pt').to(device)
-    gender_model = load_model(model_dir, device, 'gender_model2.pt').to(device)
-    mask_model  = load_model(model_dir, device, 'mask_model4.pt').to(device)
+    gender_model = load_model(model_dir, device, 'genderf1.pt').to(device)
+    mask_model  = load_model(model_dir, device, 'maskf1.pt').to(device)
+
     age_model.eval()
     gender_model.eval()
     mask_model.eval()
@@ -75,19 +76,10 @@ def inference_with_ensemble(data_dir, model_dir, output_dir):
 
     img_paths = [os.path.join(img_root, img_id) for img_id in info.ImageID]
     dataset = TestDataset(img_paths, args.resize)
-    dataset2 = TestDataset2(img_paths, args.resize)
     loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=args.batch_size,
-        num_workers=8,
-        shuffle=False,
-        pin_memory=is_cuda,
-        drop_last=False,
-    )
-    loader2 = torch.utils.data.DataLoader(
-        dataset2,
-        batch_size=args.batch_size,
-        num_workers=8,
+        num_workers=4,
         shuffle=False,
         pin_memory=is_cuda,
         drop_last=False,
@@ -96,14 +88,13 @@ def inference_with_ensemble(data_dir, model_dir, output_dir):
     print("Calculating inference results..")
     preds = []
     with torch.no_grad():
-        for images, images2 in tqdm(zip(loader, loader2)):
-
+        for images in tqdm(loader):
             images = images.to(device)
-            images2 = images2.to(device)
+
             pred = mask_model(images)
             pred_mask = pred.argmax(dim=-1)
             
-            pred = age_model(images2)
+            pred = age_model(images)
             pred_age = pred.argmax(dim=-1)
 
             pred = gender_model(images)
@@ -112,6 +103,8 @@ def inference_with_ensemble(data_dir, model_dir, output_dir):
             result = pred_mask * 6 + pred_gender * 3 + pred_age
             preds.extend(result.cpu().numpy())
 
+
+            
     info["ans"] = preds
     info.to_csv(os.path.join(output_dir, f"{args.name}_output.csv"), index=False)
     print(f"Inference Done!")
@@ -132,7 +125,7 @@ if __name__ == "__main__":
     parser.add_argument('--resize', type=tuple, default=(512, 384), help='resize size for image when you trained (default: (96, 128))')
     parser.add_argument('--mode', type=str, default='all', help='choose all or ensemble')
     args = parser.parse_args()
-
+    print(args)
     os.makedirs(args.output_dir, exist_ok=True)
 
     if args.mode == "all":

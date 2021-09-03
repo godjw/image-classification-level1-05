@@ -55,3 +55,19 @@ class ResNet18Pretrained(nn.Module):
 
     def forward(self, x):
         return self.net(x)
+
+class ResNet34Pretrained(nn.Module):
+    def __init__(self, num_classes, freeze=[]):
+        super().__init__()
+        self.net = models.resnet34(pretrained=True)
+        self.net.fc = torch.nn.Linear(
+            in_features=512, out_features=num_classes, bias=True
+        )
+        torch.nn.init.xavier_uniform_(self.net.fc.weight)
+        stdv = 1.0 / math.sqrt(self.net.fc.weight.size(1))
+        self.net.fc.bias.data.uniform_(-stdv, stdv)
+        for layer in freeze:
+            getattr(self.net, layer).requires_grad_(False)
+
+    def forward(self, x):
+        return self.net(x)

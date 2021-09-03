@@ -25,7 +25,6 @@ class BaseTransform:
             T.CenterCrop((300, 200)),
             # T.ColorJitter(brightness=.5, hue=.3),
             T.ToTensor(),
-            
             # T.Normalize(mean=mean, std=std),
         ]
 

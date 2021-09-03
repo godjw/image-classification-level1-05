@@ -8,7 +8,7 @@ import torch
 from torch.optim.lr_scheduler import StepLR
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, roc_auc_score
 from torchvision import models
 import torch.nn as nn
 
@@ -34,21 +34,21 @@ def train(helper):
     data_info = DataInfo(
         file_dir=args.file_dir, data_dir=args.data_dir, new_dataset=args.new_dataset
     )
-    train_df, valid_df, dist_df = data_info.split_dataset(args.val_ratio)
+    train_df, valid_df, dist_df = data_info.split_dataset(val_size=args.val_ratio)
 
-    # age = train_df.age
-    # age_filter_1 = ~((56 <= age) & (age < 60))
-    # age_filter_2 = ~((30 <= age) & (age < 35))
-    # age_filter = age_filter_1 & age_filter_2
+    age = train_df.age
+    age_filter_1 = ~((55 <= age) & (age < 60))
+    age_filter_2 = ~((30 <= age) & (age < 40))
+    age_filter = age_filter_1  & age_filter_2
 
-    # train_df = train_df.loc[age_filter, :]
+    train_df = train_df.loc[age_filter, :]
 
     age = valid_df.age
     age_filter_1 = ~((55 <= age) & (age < 60))
-    age_filter_2 = ~((30 <= age) & (age < 35))
-    age_filter = age_filter_1 & age_filter_2
+    age_filter_2 = ~((30 <= age) & (age < 40))
+    age_filter = age_filter_1 # & age_filter_2
     valid_df = valid_df.loc[age_filter, :]
-
+    
     mean = (0.56019358, 0.52410121, 0.501457)
     std = (0.23318603, 0.24300033, 0.24567522)
     Dataset = getattr(import_module("dataset"), args.dataset)
@@ -96,7 +96,6 @@ def train(helper):
     model = Model(num_classes=num_classes, freeze=args.freeze).to(device)
     model = torch.nn.DataParallel(model)
     criterion = get_criterion(args.criterion)
-    # criterion = nn.MultiLabelSoftMarginLoss().to(device)
     Optimizer = getattr(import_module('torch.optim'), args.optimizer)
     optimizer = Optimizer(
         filter(lambda p: p.requires_grad, model.parameters()),
@@ -168,7 +167,6 @@ def train(helper):
                 )
                 loss_value = 0
                 matches = 0
-        # optimizer.step()
         scheduler.step()
 
         model.eval()
@@ -203,21 +201,6 @@ def train(helper):
                 val_acc_items.append(acc_item)
                 val_f1_items.append(f1_item)
 
-                # if figure is None:
-                #     imgs = (
-                #         torch.clone(inputs).detach().cpu().permute(0, 2, 3, 1).numpy()
-                #     )
-                #     imgs = train_set.denormalize_image(
-                #         imgs, train_set.mean, train_set.std
-                #     )
-                #     figure = logger.grid_image(
-                #         imgs=imgs,
-                #         labels=labels,
-                #         preds=preds,
-                #         n=16,
-                #         shuffle=args.dataset != "MaskSplitByProfileDataset",
-                #     )
-
             val_loss = np.sum(val_loss_items) / len(valid_loader)
             val_acc = np.sum(val_acc_items) / len(valid_set)
             val_f1 = np.average(val_f1_items)
@@ -240,7 +223,7 @@ def train(helper):
                     preds=val_preds,
                     save_path=os.path.join(
                         save_dir,
-                        f"f1_{args.mode if args.mode else args.model_name}_confusion_matrix.png",
+                        f"acc_{args.mode if args.mode else args.model_name}_confusion_matrix.png",
                     ),
                 )
             if val_f1 > best_f1:
@@ -258,7 +241,7 @@ def train(helper):
                     preds=val_preds,
                     save_path=os.path.join(
                         save_dir,
-                        f"acc_{args.mode if args.mode else args.model_name}_confusion_matrix.png",
+                        f"f1_{args.mode if args.mode else args.model_name}_confusion_matrix.png",
                     ),
                 )
             print(
@@ -305,7 +288,6 @@ if __name__ == "__main__":
     wandb_file = json.load(open("wandb_config.json"))
     project, entity, name = wandb_file["init"].values()
     wandb.init(project=project, entity=entity, name=name, config=args)  # wandb 초기화
-    print(args)
 
     helper = settings.SettingsHelper(
         args=args, device=torch.device("cuda" if torch.cuda.is_available() else "cpu")

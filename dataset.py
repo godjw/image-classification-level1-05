@@ -24,6 +24,7 @@ class TrainInfo:
         self.data = (
             pd.read_csv(file_dir) if file_dir else pd.read_csv("processed_train.csv")
         )
+        
         self.data_dir = Path(data_dir)
 
         # self.data = self.data.query('(age <= 20) | (age >=35 & age <= 45) | (age >= 60)')
@@ -50,7 +51,7 @@ class TrainInfo:
 
         train_idxs = _idxs - valid_idxs
         train_df = self.data.loc[self.data[crit_col].isin(train_idxs)]
-        train_df = train_df.query("(age <= 20) | (age >=30 & age <= 50) | (age >= 60)")
+        # train_df = train_df.query("(age <= 20) | (age >=30 & age <= 50) | (age >= 60)")
 
         split_result = dict(origin=self.data, train=train_df, valid=valid_df)
         split_result = self._split_result(split_result)
@@ -190,7 +191,7 @@ class TestDataset2(Dataset):
 
         if self.transform:
             image = self.transform(image)
-        return image[:, 0:150, :]
+        return image
 
     def __len__(self):
         return len(self.img_paths)
