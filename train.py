@@ -311,6 +311,5 @@ if __name__ == "__main__":
         wb_object = json.load(f)
         project, entity, name = wb_object["init"].values()
         wandb.init(project=project, entity=entity, config=args)
-    print(args)
 
     train(helper=helper)
