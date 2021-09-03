@@ -41,7 +41,11 @@ class SettingsHelper:
         it dumps newly generated files over existing files.
         If dump=False, it automatically generates a new directory which has a name
         that the postfix number is increased by 1.
+
+        Args:
+            dump (bool): Whether to dump existing direcory or not
         """
+
         save_dir = Path(os.path.join(self.args.model_dir, self.args.name))
         if not save_dir.exists() or dump:
             return str(save_dir)
