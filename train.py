@@ -31,7 +31,6 @@ def train(helper):
     mean = (0.56019358, 0.52410121, 0.501457)
     std = (0.23318603, 0.24300033, 0.24567522)
     Dataset = getattr(import_module("dataset"), args.dataset)
-    data_set = Dataset(data_info.data, mean=mean, std=std, label_col="Class" + args.mode.capitalize())
     train_set = Dataset(train_df, mean=mean, std=std, label_col="Class" + args.mode.capitalize())
     valid_set = Dataset(valid_df, mean=mean, std=std, label_col="Class" + args.mode.capitalize())
     num_classes = valid_set.num_classes
@@ -317,7 +316,7 @@ if __name__ == "__main__":
     """
     wandb_file = json.load(open("wandb_config.json"))
     project, entity, name = wandb_file["init"].values()
-    wandb.init(project=project, entity=entity, name=name, config=args)  # wandb 초기화
+    wandb.init(project=project, entity=entity, name=name, config=args)
     print(args)
 
     helper = settings.SettingsHelper(
