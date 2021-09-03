@@ -1,16 +1,7 @@
 {
-    "init" : {
-              "project" : "younghoon",
-              "entity" : "aim5",
-              "name" : "exp14"
-             }
- 
+    "init": {
+        "project": "kwanghyoun",
+        "entity": "aim5",
+        "name": "exp"
+    }
 }
-
-
-
-
-
-
-
-

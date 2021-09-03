@@ -49,14 +49,10 @@ def train(helper):
         map(lambda trf: getattr(import_module("transform"), trf), args.transform)
     )
     val_transform = Transforms[0](
-        resize=args.resize,
-        mean=train_set.mean,
-        std=train_set.std,
+        resize=args.resize, mean=train_set.mean, std=train_set.std,
     )
     train_transform = Transforms[1](
-        resize=args.resize,
-        mean=train_set.mean,
-        std=train_set.std,
+        resize=args.resize, mean=train_set.mean, std=train_set.std,
     )
     train_set.set_transform(train_transform)
     valid_set.set_transform(val_transform)
