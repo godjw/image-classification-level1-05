@@ -1,4 +1,5 @@
 # Image Classfication Level1-05 AIM 
+[Information](https://github.com/godjw/image-classification-level1-05/blob/master/%E1%84%85%E1%85%B5%E1%84%91%E1%85%A9%E1%84%90%E1%85%B3_level1_5.pdf)
 
 ## Wandb Login
 
